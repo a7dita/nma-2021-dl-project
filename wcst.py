@@ -77,7 +77,7 @@ class WCST(gym.Env):
     def reset(self):
         """reset the state of the environment to the initial state"""
         self.card_deck = card_generator()
-        self.correct_counter = 0 # number of correct responses in a row
+        self.success_counter = 0 # number of correct responses in a row
 
     def render(self, mode="human", close=False):
         """render the environment to the screen"""
