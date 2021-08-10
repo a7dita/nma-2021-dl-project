@@ -13,8 +13,8 @@ N_DISCRETE_ACTIONS = 4 # pick one of the four discrete cards
 
 class WCST(gym.Env):
 
-  """WCST environment that follows the OpenAI gym interface"""
-  metadata = {'render.modes': ['human']}
+    """WCST environment that follows the OpenAI gym interface"""
+    metadata = {'render.modes': ['human']}
 
     def __init__(self):
         """Initiate the env with action and observation space"""
@@ -27,6 +27,7 @@ class WCST(gym.Env):
         self.observation_space = card_generator()
         # Initialize state
         self.success_counter = 0 # number of correct responses in a row
+        self.current_step = 0
 
         # TODO how to incorporate gym.space
         self.rule = random.randint(1,4)
