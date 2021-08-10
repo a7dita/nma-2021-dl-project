@@ -38,11 +38,6 @@ class WCST(gym.Env):
     def _take_action(self, obs, policy=None):
         """agent picks one of the four cards based on predefined policy"""
 
-        if policy == None:
-            action = self.action_space.sample()  # random policy, for now
-        else:
-            action = policy(obs)  # any other policy based on the observation
-
     def _calculate_reward(self, rule, obs, action):
         # the true rule is not part of the observation?
 
@@ -51,7 +46,7 @@ class WCST(gym.Env):
 
         return reward
 
-    def step(self, obs, policy=None):
+    def step(self, action):
         """Take one step in the environment"""
 
         rule = self.rule
@@ -61,7 +56,7 @@ class WCST(gym.Env):
         else:
             pass
 
-        action = self._take_action(obs, policy)
+        action = self._take_action(action)
         reward = self._calculate_reward(rule, obs, action)
 
         self.current_step += 1
