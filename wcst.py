@@ -41,37 +41,34 @@ class WCST(gym.Env):
         card = np.random.choice(wcst_cards)
         return card
 
-    def _take_action(self, policy=None):
+    def _take_action(self, obs, policy=None):
         """agent picks one of the four cards based on predefined policy"""
 
         if policy == None:
             action = self.action_space.sample()  ## random policy, for now
         else:
-            obs = self._next_observation()
             action = policy(obs)  ## any other policy based on the observation
-        return action
+        return obs, action
 
-    def _calculalte_reward(self):
+    def _calculalte_reward(self, rule, obs, action):
 
-        rule = self._rule_env()
-        obs = self._next_observation()
-        action = self._take_action(policy=None)
         right_action = obs[rule]
         reward = +1 if action == right_action else -1
 
         return reward
 
-    def step(self, policy=None):
+    def step(self, obs, policy=None):
         """make one step in the environment"""
 
-        self._take_action(policy=None)
-        self.current_step += 1
-        reward = self._calculalte_reward()
-        done = self.current_step >= 250  # the game is over after 250 steps
-        obs = self._next_observation()
-        # FIXME the order of the steps
+        rule = self._rule_env()
+        action = self._take_action(obs, policy=None)
+        reward = self._calculalte_reward(rule, obs, action)
 
-        return obs, reward, done, {}
+        self.current_step += 1
+        done = self.current_step >= 250  # the game is over after 250 steps
+
+        next_obs = self._next_observation()
+        return action, reward, next_obs, done, {}
 
     def reset(self):
         """reset the state of the environment to the initial state"""
