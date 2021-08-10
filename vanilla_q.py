@@ -5,10 +5,6 @@ import acme
 import numpy as np
 from typing import Callable, Sequence
 
-import wcst
-
-# Instantiate the WCST environment
-env = wcst.WCST()
 
 # A value-based policy takes the Q-values at a state and returns an action.
 QValues = np.ndarray
@@ -19,12 +15,12 @@ ValueBasedPolicy = Callable[[QValues], Action]
 class VanillaQ(acme.Actor):
     def __init__(
         self,
-        env=env,
-        behaviour_policy: ValueBasedPolicy,
+        behaviour_policy: ValueBasedPolicy=None,
+        env,
         num_states=24,
         num_actions=4,
         step_size=0.1,
-        discount_factor=0.9
+        discount_factor=0.9,
     ):
 
         # Create the table of Q-values, all initialized at zero.
@@ -34,7 +30,7 @@ class VanillaQ(acme.Actor):
         self._step_size = step_size
         self._discount_factor = discount_factor
 
-        #Store the environment
+        # Store the environment
         self._env = env
 
         # Store behavior policy.
