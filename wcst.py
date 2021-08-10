@@ -13,6 +13,7 @@ N_DISCRETE_ACTIONS = 4 # pick one of the four discrete cards
 
 class WCST(gym.Env):
 
+
     """WCST environment that follows the OpenAI gym interface"""
     metadata = {'render.modes': ['human']}
 
@@ -25,16 +26,13 @@ class WCST(gym.Env):
         self.card_deck = card_generator()
         # Observations are discrete
         self.observation_space = card_generator()
-        # Initialize state
+        self.rule = np.random.choice([0, 1, 2])
         self.success_counter = 0 # number of correct responses in a row
-        self.current_step = 0
 
-        # TODO how to incorporate gym.space
-        self.rule = random.randint(1,4)
 
     def _next_observation(self):
         """a card is shown with values of (colour, form, num of elements)"""
-        card = random.choice(self.card_deck) # do we discard used cards? -- no, we have 24 unique cards but 250 trials
+        card = random.choice(self.card_deck) # do we discard used cards? -- no, we have 24 unique cards but at maximum 250 trials
         return card
 
     # def _take_action(self):
@@ -54,7 +52,7 @@ class WCST(gym.Env):
 
         success_streak = random.randint(2,5)
         if self.success_counter > success_streak:
-            self.rule = random.randint(1,4)
+            self.rule = np.random.choice([0, 1, 2])
         else:
             pass
 
@@ -62,6 +60,7 @@ class WCST(gym.Env):
         reward = self._calculate_reward(rule, obs, action)
 
         self.current_step += 1
+        
         if reward == 1:
             self.success_counter += 1 # count the number of correct moves in a row
         else:
