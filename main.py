@@ -10,6 +10,7 @@ import torch.nn as nn
 
 if __name__ == '__main__':
     env = wcst.WCST()
+    env.reset()
     # agent = vanilla_q.VanillaQ(env)
 
     for i in range(250):

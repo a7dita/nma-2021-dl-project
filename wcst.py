@@ -7,8 +7,6 @@ import numpy as np
 from itertools import permutations
 from wcst_cards import card_generator
 
-import sys
-
 N_DISCRETE_ACTIONS = 4 # pick one of the four discrete cards
 
 class WCST(gym.Env):
@@ -82,4 +80,6 @@ class WCST(gym.Env):
         # TODO print more stuff here
 
     def close(self):
-        sys.exit()
+        if self.env is not None:
+            self.env.close()
+        super().close()
