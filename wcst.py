@@ -24,6 +24,7 @@ class WCST(gym.Env):
         # Actions are discrete:
         self.action_space = spaces.Discrete(N_DISCRETE_ACTIONS)
         self.card_deck = card_generator()
+        self.current_step = 0
         # Observations are discrete
         self.observation_space = card_generator()
         self.rule = np.random.choice([0, 1, 2])
@@ -39,7 +40,7 @@ class WCST(gym.Env):
     #     """agent picks one of the four cards based on predefined policy"""
     #     # WIP
 
-    def _calculate_reward(self, obs, action):
+    def _calculate_reward(self, action):
         # the true rule is not part of the observation?
 
         right_action = self.rule
@@ -56,11 +57,11 @@ class WCST(gym.Env):
         else:
             pass
 
-        action = self._take_action(action)
-        reward = self._calculate_reward(rule, obs, action)
+        action = action
+        reward = self._calculate_reward(action)
 
         self.current_step += 1
-        
+
         if reward == 1:
             self.success_counter += 1 # count the number of correct moves in a row
         else:
@@ -68,16 +69,16 @@ class WCST(gym.Env):
         done = self.current_step >= 250  # the game is over after 250 steps
 
         obs = self._next_observation()
-        return action, reward, obs, done, {}
+        return action, reward, obs, done
 
     def reset(self):
         """reset the state of the environment to the initial state"""
         self.success_counter = 0 # number of correct responses in a row
+        return self._next_observation()
 
     def render(self, mode="human", close=False):
         """render the environment to the screen"""
-        print(f"Step: {self.current_step}")
-        print(f"Action, reward, card, done : {self.step}")
+        print('Step: {current_step}'.format(current_step=self.current_step))
         # TODO print more stuff here
 
     def close(self):
