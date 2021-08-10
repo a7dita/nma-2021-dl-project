@@ -37,7 +37,7 @@ class VanillaQ:
 
         self._state = None
         self._action = None
-        self._next_state = None
+        self._next_state = None # is this needed?
 
     def q_values(self):
         return self._q
@@ -56,4 +56,4 @@ class VanillaQ:
         # Update the Q-value table value at (s, a).
         self._q[s, a] += self._step_size * tde
         # Update the current state.
-        self._state = self._next_state
+        self._state = next_s
