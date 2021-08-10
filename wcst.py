@@ -36,14 +36,14 @@ class WCST(gym.Env):
         card = random.choice(self.card_deck) # do we discard used cards? -- no, we have 24 unique cards but 250 trials
         return card
 
-    def _take_action(self, obs, policy=None):
-        """agent picks one of the four cards based on predefined policy"""
-        # WIP
+    # def _take_action(self):
+    #     """agent picks one of the four cards based on predefined policy"""
+    #     # WIP
 
     def _calculate_reward(self, obs, action):
         # the true rule is not part of the observation?
 
-        right_action = obs[self.rule]
+        right_action = self.rule
         reward = +1 if action == right_action else -1
 
         return reward
@@ -51,10 +51,9 @@ class WCST(gym.Env):
     def step(self, action):
         """Take one step in the environment"""
 
-        rule = self.rule
         success_streak = random.randint(2,5)
         if self.success_counter > success_streak:
-            rule = random.randint(1,4)
+            self.rule = random.randint(1,4)
         else:
             pass
 
