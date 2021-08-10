@@ -22,26 +22,28 @@ class WCST(gym.Env):
 
         # Actions are discrete:
         self.action_space = spaces.Discrete(N_DISCRETE_ACTIONS)
+        self.card_deck = card_generator()
         # Observations are discrete
         self.observation_space = card_generator()
         # Initialize state
-        self.reset()
+        self.success_counter = 0 # number of correct responses in a row
 
         # TODO how to incorporate gym.space
         self.rule = random.randint(1,4)
 
     def _next_observation(self):
         """a card is shown with values of (colour, form, num of elements)"""
-        card = random.choice(self.card_deck) # do we discard used cards?
+        card = random.choice(self.card_deck) # do we discard used cards? -- no, we have 24 unique cards but 250 trials
         return card
 
     def _take_action(self, obs, policy=None):
         """agent picks one of the four cards based on predefined policy"""
+        # WIP
 
-    def _calculate_reward(self, rule, obs, action):
+    def _calculate_reward(self, obs, action):
         # the true rule is not part of the observation?
 
-        right_action = obs[rule]
+        right_action = obs[self.rule]
         reward = +1 if action == right_action else -1
 
         return reward
@@ -71,7 +73,6 @@ class WCST(gym.Env):
 
     def reset(self):
         """reset the state of the environment to the initial state"""
-        self.card_deck = card_generator()
         self.success_counter = 0 # number of correct responses in a row
 
     def render(self, mode="human", close=False):
