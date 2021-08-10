@@ -1,7 +1,6 @@
 ## Crete a vanilla Q-learning agent.
 
 import typing
-import acme
 import numpy as np
 from typing import Callable, Sequence
 
@@ -12,11 +11,11 @@ Action = int
 ValueBasedPolicy = Callable[[QValues], Action]
 
 
-class VanillaQ(acme.Actor):
+class VanillaQ:
     def __init__(
         self,
-        behaviour_policy: ValueBasedPolicy=None,
         env,
+        behaviour_policy: ValueBasedPolicy = None,
         num_states=24,
         num_actions=4,
         step_size=0.1,
