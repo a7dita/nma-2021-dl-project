@@ -5,8 +5,9 @@ from gym import spaces
 from itertools import permutations
 from wcst_cards import card_generator
 
-N_DISCRETE_ACTIONS = 4 # pick one of the four discrete cards
-N_DISCRETE_CARDS = 24 # use a deck of 24 unique cards
+N_DISCRETE_ACTIONS = 4  # pick one of the four discrete cards
+N_DISCRETE_CARDS = 24  # use a deck of 24 unique cards
+
 
 class WCST(gym.Env):
 
@@ -18,18 +19,22 @@ class WCST(gym.Env):
 
         # Actions are discrete:
         self.action_space = spaces.Discrete(N_DISCRETE_ACTIONS)
-        self.card_deck = card_generator() # please do not delete the card deck! Not a duplicate variable!
+        self.card_deck = card_generator()
+        # NOTE please do not delete the card deck! Not a duplicate variable! - Now they are not. :P
         self.current_step = 0
         # Observations are discrete
-        self.observation_space = spaces.Discrete(N_DISCRETE_CARDS) # please do not replace this w card_generator!
+        self.observation_space = spaces.Discrete(N_DISCRETE_CARDS)
+        # NOTE please do not replace this w card_generator!
         self.rule = np.random.choice([0, 1, 2])
-        self.success_counter = 0 # number of correct responses in a row
+        self.success_counter = 0  # number of correct responses in a row
 
         self.rule = np.random.choice([0, 1, 2])
 
     def _next_observation(self):
         """a card is shown with values of (colour, form, num of elements)"""
-        card = random.choice(self.card_deck) # please do not replace this w observation space
+        card = random.choice(
+            self.card_deck
+        )  # please do not replace this w observation space
         # NOTE do we discard used cards? -- no, we have 24 unique cards but 250 trials
         return card
 
@@ -50,7 +55,8 @@ class WCST(gym.Env):
     def step(self, action):
         """Take one step in the environment"""
 
-        success_streak = random.randint(2, 6) # why 6?
+        success_streak = random.randint(2, 6)
+        # NOTE why 6? - This Python method asks for a semi-open interval like "[)"
         if self.success_counter > success_streak:
 
             available_rules = [x for x in [0, 1, 2] if x != self.rule]
@@ -58,7 +64,7 @@ class WCST(gym.Env):
         else:
             pass
 
-        #self._take_action(action)
+        # self._take_action(action)
 
         obs = self._next_observation()
         reward = self._calculate_reward(action)
