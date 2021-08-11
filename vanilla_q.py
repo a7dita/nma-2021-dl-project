@@ -73,28 +73,28 @@ class Agent:
         # TODO implement other policies later
         return action
 
+    def render(self):
+        self._env.render()
+        print(f"New state: {self._state}")
+        print(f"Prev. action: {self._action}")
+
     def update(self):
         # Get action based on policy
         s = self._state
-        print(f"State: {s}")
         a = self.select_action(s)
-        print(f"Action: {a}")
 
         # Update environment, get next_s and reward as observations
         a, r, next_s, _ = self._env.step(a)
-        print(f"Reward: {r}")
-        print(f"Next_s: {next_s}")
 
         # Get discount factor applied on future rewards
         g = self._discount_factor
 
         # Compute Temporal Difference error (TDE)
         tde = self._td_error(s, a, r, g, next_s)
-        if r == 1:
-            print(f"tde: {tde}")
 
         # Update the Q-value table value at (s, a).
         self._q.loc[[s], a] += self._step_size * tde
+
         # Update the current state.
         self._state = next_s
         self._action = a

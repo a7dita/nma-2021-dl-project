@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # The parts that aren't ready yet are commented out
 import wcst
-# import deep_q
+import deep_q
 import vanilla_q
 # import torch
 # import torch.nn as nn
@@ -25,11 +25,19 @@ def cli_args():
         description="Runs the Wisconsin Card Sorting Task (WCST) using the specified "
         "reinforcement learning (RL) agent. Default: vanilla_q")
 
+    # This is positional; last argument provided.
     parser.add_argument('agent', nargs='?', default='vanilla_q', choices=LIST_OF_AGENTS,
                         help='Agent to run the task. Allowed values: '+
                         ', '.join(LIST_OF_AGENTS), metavar='')
 
+    parser.add_argument('-s', '--steps', default=250,
+                        help='Number of steps to run the agent through the environment.')
+
+    parser.add_argument('-o', '--output', default=None,
+                        help='Output format of generated data.')
+
     # returns dictionary of command line arguments
+    # all of this is just for convenience
     return vars(parser.parse_args())
 
 def output_csv(df):
@@ -46,7 +54,6 @@ def create_agent(string):
     """Creates a new agent object from the module specified in input string."""
     return eval(string).Agent(env)
 
-# TODO merge lol
 # if __name__ == '__main__':
 #     env = wcst.WCST()
 #     env.reset()
@@ -69,21 +76,25 @@ if __name__ == '__main__':
     # create agent specified by cmd line option
     agent = create_agent(cli_args['agent'])
 
-    # # create df to save some metadata
-    # df = pd.DataFrame()
+    # create df to save some metadata
+    df = pd.DataFrame()
 
-    # for i in range(250):
+    for i in range(cli_args['steps']):
+        # FIXME so this is a bit clunky and should be changed probably
+        s = agent._state
+        a = agent._action
+        rule = agent._env.rule
+        q = agent._q.copy(deep=True)
 
-    #     s = agent._state
-    #     a = agent._action
-    #     rule = agent._env.rule
-    #     q = agent._q.copy(deep=True)
+        df = df.append({'state' : s,
+                   'prev_action' : a,
+                   'rule' : rule,
+                   'q_table' : q}, ignore_index=True)
 
-    #     df = df.append({'state' : s,
-    #                'prev_action' : a,
-    #                'rule' : rule,
-    #                'q_table' : q}, ignore_index=True)
+        # update state of agent and environment
+        agent.update()
+        # render state of agent and environment
+        agent.render()
 
-    #     # update state of agent and environment
-    #     agent.update()
-    #     output_csv(df)
+    if cli_args['output'] == 'csv':
+        output_csv(df)
