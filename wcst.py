@@ -48,6 +48,9 @@ class WCST(gym.Env):
     def _calculate_reward(self, action):
         # the true rule is not part of the observation?
         reward = +1 if action == self.rule else -1
+        # FIXME reward = +1 if action = current_card[curret_rule]
+        # [action = self.rule] is not the case
+        # How to get the current_card?
 
         return reward
 
