@@ -6,16 +6,18 @@ from gym import spaces
 from itertools import permutations
 from wcst_cards import card_generator
 
-#unused imports
-#import json
-#import pandas as pd
+# unused imports
+# import json
+# import pandas as pd
 
-N_DISCRETE_ACTIONS = 4 # pick one of the four discrete cards
+N_DISCRETE_ACTIONS = 4  # pick one of the four discrete cards
+
 
 class WCST(gym.Env):
 
     """WCST environment that follows the OpenAI gym interface"""
-    metadata = {'render.modes': ['human']}
+
+    metadata = {"render.modes": ["human"]}
 
     def __init__(self):
         """Initiate the env with action and observation space"""
@@ -52,7 +54,7 @@ class WCST(gym.Env):
     def step(self, action):
         """Take one step in the environment"""
 
-        success_streak = random.randint(2,5)
+        success_streak = random.randint(2, 5)
         if self.success_counter > success_streak:
             self.rule = np.random.choice([0, 1, 2])
         else:
@@ -65,22 +67,22 @@ class WCST(gym.Env):
 
         self.current_step += 1
         if reward == 1:
-            self.success_counter += 1 # count the number of correct moves in a row
+            self.success_counter += 1  # count the number of correct moves in a row
         else:
-            self.success_counter = 0 # reset after wrong move
+            self.success_counter = 0  # reset after wrong move
         done = self.current_step >= 250  # the game is over after 250 steps
 
         return action, reward, obs, done
 
     def reset(self):
         """reset the state of the environment to the initial state"""
-        self.success_counter = 0 # number of correct responses in a row
+        self.success_counter = 0  # number of correct responses in a row
         self.current_step = 0
         return self._next_observation()
 
     def render(self, mode="human", close=False):
         """render the environment to the screen"""
-        print('Step: {current_step}'.format(current_step=self.current_step))
+        print("Step: {current_step}".format(current_step=self.current_step))
         # TODO print more stuff here
 
     def close(self):
