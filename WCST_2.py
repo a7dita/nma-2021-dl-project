@@ -59,8 +59,10 @@ for i in range(1,251):
 
   if response_valid == True:
     success_count = success_count + 1
+  else:
+    success_count = 0
 
-  if switch_count == 2:
+  if switch_count == 41:
     break
 
   print("Response was: ", response_valid)
