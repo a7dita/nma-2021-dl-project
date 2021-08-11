@@ -1,33 +1,34 @@
-## Crete a vanilla Q-learning agent.
-
+## TODO Create a vanilla Q-learning agent.
 import typing
 import numpy as np
 from typing import Callable, Sequence
-
-
-# A value-based policy takes the Q-values at a state and returns an action.
-QValues = np.ndarray
-Action = int
-ValueBasedPolicy = Callable[[QValues], Action]
+import pandas as pd
 
 
 class VanillaQ:
     def __init__(
         self,
         env,
-        behaviour_policy: ValueBasedPolicy = None,
-        num_states=24,
-        num_actions=4,
+        policy=None,
         step_size=0.1,
         discount_factor=0.9,
+        epsilon=0.1,
     ):
 
-        # Create the table of Q-values, all initialized at zero.
-        self._q = np.zeros((num_states, num_actions))
+        # Get size of state and action space from the environment
+        self._num_states = len(env.observation_space)
+        self._num_actions = env.action_space.n
+
+        # Create a table of Q-values with card tuples as row indexes.
+        self._q = pd.DataFrame(
+            index=env.observation_space,
+            data=np.zeros((self._num_states, self._num_actions)),
+        )
 
         # Store algorithm hyper-parameters.
         self._step_size = step_size
         self._discount_factor = discount_factor
+        self._epsilon = epsilon
 
         # Store the environment
         self._env = env
@@ -35,25 +36,65 @@ class VanillaQ:
         # Store behavior policy.
         self._behaviour_policy = behaviour_policy
 
-        self._state = None
+        # Initialize state
+        self._state = env._next_observation()
         self._action = None
-        self._next_state = None # is this needed?
 
-    def q_values(self):
+    def q_values(self, state):
         return self._q
 
     def _td_error(self, s, a, r, g, next_s):
         # Compute the TD error.
-        return r + g * np.max(self._q[next_s]) - self._q[s, a]
+        max_q = self._q.loc[[next_s]].max(axis=1).values
+        cur_q = self._q.loc[[s], a].values
+        tde = r + g * max_q - cur_q
+        return tde
+
+    def select_action(self, state, policy=None):
+
+        if policy == None:
+            # Default policy: random action
+            # Exploration
+            action = np.random.randint(low=0, high=self._num_actions)
+
+        elif policy == "simple-table-lookup":
+            # Select action by just looking at Q-table
+            # Exploitation
+            action = self._q[state].argmax()  # wrong indexing
+
+        elif policy == "epsilon-greedy":
+            # Select action based on the epsilon-greedy policy
+            # Finding out the exploration-exploitation balance
+            if self._epsilon < np.random.random():
+                action = self._q[state].argmax()  # wrong indexing
+            else:
+                action = np.random.randint(low=0, high=self._num_actions)
+
+        # TODO implement other policies later
+        return action
 
     def update(self):
-
+        # Get action based on policy
         s = self._state
-        a, r, next_s, _, _ = self.env.step(s, policy=self._behaviour_policy)
+        print(f"State: {s}")
+        a = self.select_action(s)
+        print(f"Action: {a}")
+
+        # Update environment, get next_s and reward as observations
+        a, r, next_s, _, _ = self._env.step(a)
+        print(f"Reward: {r}")
+        print(f"Next_s: {next_s}")
+
+        # Get discount factor applied on future rewards
         g = self._discount_factor
+
+        # Compute Temporal Difference error (TDE)
         tde = self._td_error(s, a, r, g, next_s)
+        if r == 1:
+            print(f"tde: {tde}")
 
         # Update the Q-value table value at (s, a).
-        self._q[s, a] += self._step_size * tde
+        self._q.loc[[s], a] += self._step_size * tde
         # Update the current state.
         self._state = next_s
+        self._action = a

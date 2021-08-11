@@ -1,17 +1,18 @@
+import sys
 import random
-import json
+import numpy as np
 import gym
 from gym import spaces
-import pandas as pd
-import numpy as np
 from itertools import permutations
 from wcst_cards import card_generator
 
 N_DISCRETE_ACTIONS = 4 # pick one of the four discrete cards
 N_DISCRETE_CARDS = 24 # use a deck of 24 unique cards
 
-class WCST(gym.Env):
+N_DISCRETE_ACTIONS = 4  # pick one of the four discrete cards
 
+
+class WCST(gym.Env):
 
     """WCST environment that follows the OpenAI gym interface"""
 
@@ -28,55 +29,62 @@ class WCST(gym.Env):
         self.rule = np.random.choice([0, 1, 2])
         self.success_counter = 0 # number of correct responses in a row
 
+        self.rule = np.random.choice([0, 1, 2])
 
     def _next_observation(self):
         """a card is shown with values of (colour, form, num of elements)"""
-        card = random.choice(self.card_deck) # do we discard used cards? -- no, we have 24 unique cards but at maximum 250 trials
+        card = random.choice(self.observation_space)
+        # NOTE do we discard used cards? -- no, we have 24 unique cards but 250 trials
         return card
 
-    # def _take_action(self):
-    #     """agent picks one of the four cards based on predefined policy"""
-    #     # WIP
+    def _take_action(self, action):
+        """update environment based on action given by agent"""
+        # NOTE No effect of action on environment in WCST setting
+        pass
 
     def _calculate_reward(self, action):
         # the true rule is not part of the observation?
-
-        right_action = self.rule
-        reward = +1 if action == right_action else -1
+        reward = +1 if action == self.rule else -1
+        # FIXME reward = +1 if action = current_card[curret_rule]
+        # [action = self.rule] is not the case
+        # How to get the current_card?
 
         return reward
 
     def step(self, action):
         """Take one step in the environment"""
 
-        success_streak = random.randint(2,5)
+        success_streak = random.randint(2, 6)
         if self.success_counter > success_streak:
-            self.rule = np.random.choice([0, 1, 2])
+
+            available_rules = [x for x in [0, 1, 2] if x != self.rule]
+            self.rule = np.random.choice(available_rules)
         else:
             pass
 
-        action = action
+        self._take_action(action)
+
+        obs = self._next_observation()
         reward = self._calculate_reward(action)
 
         self.current_step += 1
-
         if reward == 1:
-            self.success_counter += 1 # count the number of correct moves in a row
+            self.success_counter += 1  # count the number of correct moves in a row
         else:
-            self.success_counter = 0 # reset after wrong move
+            self.success_counter = 0  # reset after wrong move
         done = self.current_step >= 250  # the game is over after 250 steps
 
-        obs = self._next_observation()
         return action, reward, obs, done
 
     def reset(self):
         """reset the state of the environment to the initial state"""
-        self.success_counter = 0 # reset success streak counter
+        self.success_counter = 0  # number of correct responses in a row
+        self.current_step = 0
         return self._next_observation()
 
     def render(self, mode="human", close=False):
         """render the environment to the screen"""
-        print('Step: {current_step}'.format(current_step=self.current_step))
+        print("Step: {current_step}".format(current_step=self.current_step))
         # TODO print more stuff here
 
     def close(self):
