@@ -4,16 +4,12 @@ import numpy as np
 from typing import Callable, Sequence
 import pandas as pd
 
-# A value-based policy takes the Q-values at a state and returns an action.
-QValues = np.ndarray
-Action = int
-ValueBasedPolicy = Callable[[QValues], Action]
 
 class VanillaQ:
     def __init__(
         self,
         env,
-        behaviour_policy: ValueBasedPolicy = None,
+        policy=None,
         step_size=0.1,
         discount_factor=0.9,
         epsilon=0.1,
