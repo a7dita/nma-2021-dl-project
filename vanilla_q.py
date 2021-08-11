@@ -20,8 +20,10 @@ class VanillaQ:
         self._num_actions = env.action_space.n
 
         # Create a table of Q-values with card tuples as row indexes.
-        self._q = pd.DataFrame(index=env.observation_space,
-                               data=np.zeros((self._num_states, self._num_actions)))
+        self._q = pd.DataFrame(
+            index=env.observation_space,
+            data=np.zeros((self._num_states, self._num_actions)),
+        )
 
         # Store algorithm hyper-parameters.
         self._step_size = step_size
@@ -44,16 +46,16 @@ class VanillaQ:
     def _td_error(self, s, a, r, g, next_s):
         # Compute the TD error.
         max_q = self._q.loc[[next_s]].max(axis=1).values
-        cur_q = self._q.loc[[s],a].values
+        cur_q = self._q.loc[[s], a].values
         tde = r + g * max_q - cur_q
         return tde
 
     def select_action(self, state, policy=None):
-        if policy == 'epsilon-greedy':
+        if policy == "epsilon-greedy":
             # Select epsilon-greedy action.
             # TODO implement later
             if self._epsilon < np.random.random():
-                action = self._q[state].argmax() #wrong indexing
+                action = self._q[state].argmax()  # wrong indexing
             else:
                 action = np.random.randint(low=0, high=self._num_actions)
         elif policy == None:
