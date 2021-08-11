@@ -4,6 +4,7 @@ import gym
 from gym import spaces
 from itertools import permutations
 from wcst_cards import card_generator
+from rule import map_rule_to_action
 
 N_DISCRETE_ACTIONS = 4  # pick one of the four discrete cards
 N_DISCRETE_CARDS = 24  # use a deck of 24 unique cards
@@ -19,77 +20,67 @@ class WCST(gym.Env):
 
         # Actions are discrete:
         self.action_space = spaces.Discrete(N_DISCRETE_ACTIONS)
-        self.card_deck = card_generator()
-        # NOTE please do not delete the card deck! Not a duplicate variable! - Now they are not. :P
-        self.current_step = 0
         # Observations are discrete
         self.observation_space = spaces.Discrete(N_DISCRETE_CARDS)
-        # NOTE please do not replace this w card_generator!
-        self.rule = np.random.choice([0, 1, 2])
-        self.success_counter = 0  # number of correct responses in a row
 
+        # initialise cards and rule
+
+        self.card = None # the card to categorise
+        self.card_deck = card_generator()
+        # NOTE please do not delete the card deck! Not a duplicate variable - Now they are not. :P
         self.rule = np.random.choice([0, 1, 2])
+        self.right_action = map_rule_to_action(self.rule) # Map rule {0,1,2} to action {1,2,3,4}
+
+        #initialise counters
+        self.current_step = 0
+        self.success_counter = 0  # number of correct responses in a row
+        self.switch_counter = 0 # keep track of rule switches; max should be 41
 
     def _next_observation(self):
         """a card is shown with values of (colour, form, num of elements)"""
-        card = random.choice(
-            self.card_deck
-        )  # please do not replace this w observation space
+        return random.choice(self.card_deck)  # please do not replace this w observation space
         # NOTE do we discard used cards? -- no, we have 24 unique cards but 250 trials
-        return card
-
-    # def _take_action(self, action):
-    #     """update environment based on action given by agent"""
-    #     # NOTE No effect of action on environment in WCST setting
-    #     pass
 
     def _calculate_reward(self, action):
-        # the true rule is not part of the observation?
-        reward = +1 if action == self.rule else -1
-        # FIXME reward = +1 if action = current_card[curret_rule]
-        # [action = self.rule] is not the case
-        # How to get the current_card?
-
+        """Give reward of +1 if the action is correct
+        or -1 otherwise"""
+        reward = +1 if action == self.right_action else -1
         return reward
 
     def step(self, action):
         """Take one step in the environment"""
-
-        success_streak = random.randint(2, 6)
-        # NOTE why 6? - This Python method asks for a semi-open interval like "[)"
-        if self.success_counter > success_streak:
-
-            available_rules = [x for x in [0, 1, 2] if x != self.rule]
-            self.rule = np.random.choice(available_rules)
-        else:
-            pass
-
-        # self._take_action(action)
-
-        obs = self._next_observation()
-        reward = self._calculate_reward(action)
-
         self.current_step += 1
-        if reward == 1:
-            self.success_counter += 1  # count the number of correct moves in a row
-        else:
-            self.success_counter = 0  # reset after wrong move
-        done = self.current_step >= 250  # the game is over after 250 steps
 
-        return action, reward, obs, done
+        if action == self.right_action: # correct move
+            obs = self._next_observation() # show a new card
+            self.card = obs
+            self.success_counter += 1 # update success counter
+            success_streak = random.randint(2, 5) # check if it's time to switch rule
+            if self.success_counter > success_streak:
+                self.rule = np.random.choice([0, 1, 2])
+                self.right_action = map_rule_to_action(self.rule)
+
+        else: # wrong move
+            self.success_counter = 0
+            obs = self.card
+        reward = self._calculate_reward(action)
+        done = self.current_step >= 250 or self.switch_counter >=41  # the game is over after 250 steps or 41 rule switches
+
+        return action, reward, obs, done, {}
 
     def reset(self):
         """reset the state of the environment to the initial state"""
-        self.success_counter = 0  # number of correct responses in a row
+        self.card = self._next_observation()
         self.current_step = 0
-        return self._next_observation()
+        self.rule = np.random.choice([0, 1, 2])
+        self.right_action = map_rule_to_action(self.rule)
+        self.success_counter = 0  # reset success success_counter
+        self.switch_counter = 0 # reset rule switch counter
 
     def render(self, mode="human", close=False):
-        """render the environment to the screen"""
+        """Render environment to screen"""
         print("Step: {current_step}".format(current_step=self.current_step))
         # TODO print more stuff here
 
     def close(self):
-        if self.env is not None:
-            self.env.close()
         super().close()

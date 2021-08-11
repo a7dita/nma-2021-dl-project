@@ -1,5 +1,7 @@
 import numpy as np
 
+def map_rule_to_action(action): # change this to the real function
+    return action
 
 def create_rule_series(total_time):
 
