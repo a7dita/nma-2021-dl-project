@@ -5,7 +5,7 @@ from typing import Callable, Sequence
 import pandas as pd
 
 
-class VanillaQ:
+class Agent:
     def __init__(
         self,
         env,
@@ -16,12 +16,12 @@ class VanillaQ:
     ):
 
         # Get size of state and action space from the environment
-        self._num_states = len(env.observation_space)
+        self._num_states = env.observation_space.n
         self._num_actions = env.action_space.n
 
         # Create a table of Q-values with card tuples as row indexes.
         self._q = pd.DataFrame(
-            index=env.observation_space,
+            index=env.card_deck,
             data=np.zeros((self._num_states, self._num_actions)),
         )
 
@@ -34,7 +34,7 @@ class VanillaQ:
         self._env = env
 
         # Store behavior policy.
-        self._behaviour_policy = behaviour_policy
+        self._behaviour_policy = policy
 
         # Initialize state
         self._state = env._next_observation()
@@ -73,28 +73,28 @@ class VanillaQ:
         # TODO implement other policies later
         return action
 
+    def render(self):
+        self._env.render()
+        print(f"New state: {self._state}")
+        print(f"Prev. action: {self._action}")
+
     def update(self):
         # Get action based on policy
         s = self._state
-        print(f"State: {s}")
         a = self.select_action(s)
-        print(f"Action: {a}")
 
         # Update environment, get next_s and reward as observations
-        a, r, next_s, _, _ = self._env.step(a)
-        print(f"Reward: {r}")
-        print(f"Next_s: {next_s}")
+        a, r, next_s, _ = self._env.step(a)
 
         # Get discount factor applied on future rewards
         g = self._discount_factor
 
         # Compute Temporal Difference error (TDE)
         tde = self._td_error(s, a, r, g, next_s)
-        if r == 1:
-            print(f"tde: {tde}")
 
         # Update the Q-value table value at (s, a).
         self._q.loc[[s], a] += self._step_size * tde
+
         # Update the current state.
         self._state = next_s
         self._action = a

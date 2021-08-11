@@ -10,7 +10,7 @@ from replay_buffer import *
 Transitions = collections.namedtuple(
     'Transitions', ['state', 'action', 'reward', 'discount', 'next_state'])
 
-class DQN():
+class Agent():
 
   def __init__(self,
                environment,
