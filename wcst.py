@@ -1,4 +1,3 @@
-import sys
 import random
 import numpy as np
 import gym
@@ -8,9 +7,6 @@ from wcst_cards import card_generator
 
 N_DISCRETE_ACTIONS = 4 # pick one of the four discrete cards
 N_DISCRETE_CARDS = 24 # use a deck of 24 unique cards
-
-N_DISCRETE_ACTIONS = 4  # pick one of the four discrete cards
-
 
 class WCST(gym.Env):
 
@@ -33,14 +29,14 @@ class WCST(gym.Env):
 
     def _next_observation(self):
         """a card is shown with values of (colour, form, num of elements)"""
-        card = random.choice(self.observation_space)
+        card = random.choice(self.card_deck) # please do not replace this w observation space
         # NOTE do we discard used cards? -- no, we have 24 unique cards but 250 trials
         return card
 
-    def _take_action(self, action):
-        """update environment based on action given by agent"""
-        # NOTE No effect of action on environment in WCST setting
-        pass
+    # def _take_action(self, action):
+    #     """update environment based on action given by agent"""
+    #     # NOTE No effect of action on environment in WCST setting
+    #     pass
 
     def _calculate_reward(self, action):
         # the true rule is not part of the observation?
@@ -54,7 +50,7 @@ class WCST(gym.Env):
     def step(self, action):
         """Take one step in the environment"""
 
-        success_streak = random.randint(2, 6)
+        success_streak = random.randint(2, 6) # why 6?
         if self.success_counter > success_streak:
 
             available_rules = [x for x in [0, 1, 2] if x != self.rule]
@@ -62,7 +58,7 @@ class WCST(gym.Env):
         else:
             pass
 
-        self._take_action(action)
+        #self._take_action(action)
 
         obs = self._next_observation()
         reward = self._calculate_reward(action)
