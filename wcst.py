@@ -56,7 +56,9 @@ class WCST(gym.Env):
 
         success_streak = random.randint(2, 6)
         if self.success_counter > success_streak:
-            self.rule = np.random.choice([0, 1, 2])
+
+            available_rules = [x for x in [0, 1, 2] if x != self.rule]
+            self.rule = np.random.choice(available_rules)
         else:
             pass
 
