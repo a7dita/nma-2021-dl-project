@@ -51,17 +51,26 @@ class VanillaQ:
         return tde
 
     def select_action(self, state, policy=None):
-        if policy == "epsilon-greedy":
-            # Select epsilon-greedy action.
-            # TODO implement later
+
+        if policy == None:
+            # Default policy: random action
+            # Exploration
+            action = np.random.randint(low=0, high=self._num_actions)
+
+        elif policy == "simple-table-lookup":
+            # Select action by just looking at Q-table
+            # Exploitation
+            action = self._q[state].argmax()  # wrong indexing
+
+        elif policy == "epsilon-greedy":
+            # Select action based on the epsilon-greedy policy
+            # Finding out the exploration-exploitation balance
             if self._epsilon < np.random.random():
                 action = self._q[state].argmax()  # wrong indexing
             else:
                 action = np.random.randint(low=0, high=self._num_actions)
-        elif policy == None:
-            # Default policy: random action
-            action = np.random.randint(low=0, high=self._num_actions)
 
+        # TODO implement other policies later
         return action
 
     def update(self):
