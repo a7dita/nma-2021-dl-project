@@ -54,17 +54,6 @@ def create_agent(string, env):
     """Creates a new agent object from the module specified in input string."""
     return eval(string).Agent(env)
 
-# if __name__ == '__main__':
-#     env = wcst.WCST()
-#     env.reset()
-#     # agent = vanilla_q.VanillaQ(env)
-
-#     for i in range(250):
-#         action = random.randint(1,4) # taking random actions on every step
-#         action, reward, obs, done = env.step(action)
-#         env.render()
-#         print(action, reward, obs, done)
-
 def main(agent='vanilla_q', steps=250, output=None):
     # create and init environment
     env = wcst.WCST()

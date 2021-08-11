@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Run this to test the WCST environment:
-# the agent will take random actions until the game is over
+# Take random actions in the env until the game is over
 import wcst
 import random
 if __name__ == '__main__':
