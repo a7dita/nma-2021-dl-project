@@ -27,19 +27,21 @@ class WCST(gym.Env):
         # Observations are discrete
         self.observation_space = card_generator()
         # Initialize state
-        self.success_counter = 0 # number of correct responses in a row
+        self.success_counter = 0  # number of correct responses in a row
         self.current_step = 0
 
         self.rule = np.random.choice([0, 1, 2])
 
     def _next_observation(self):
         """a card is shown with values of (colour, form, num of elements)"""
-        card = random.choice(self.card_deck) # do we discard used cards? -- no, we have 24 unique cards but 250 trials
+        card = random.choice(self.card_deck)
+        # NOTE do we discard used cards? -- no, we have 24 unique cards but 250 trials
         return card
 
     def _take_action(self, action):
         """update environment based on action given by agent"""
-        # WIP
+        # NOTE No effect of action on environment in WCST setting
+        pass
 
     def _calculate_reward(self, action):
         # the true rule is not part of the observation?
