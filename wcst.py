@@ -25,7 +25,6 @@ class WCST(gym.Env):
 
         # Actions are discrete:
         self.action_space = spaces.Discrete(N_DISCRETE_ACTIONS)
-        self.card_deck = card_generator()
         # Observations are discrete
         self.observation_space = card_generator()
         # Initialize state
@@ -36,7 +35,7 @@ class WCST(gym.Env):
 
     def _next_observation(self):
         """a card is shown with values of (colour, form, num of elements)"""
-        card = random.choice(self.card_deck)
+        card = random.choice(self.observation_space)
         # NOTE do we discard used cards? -- no, we have 24 unique cards but 250 trials
         return card
 
