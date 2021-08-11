@@ -54,7 +54,7 @@ class WCST(gym.Env):
     def step(self, action):
         """Take one step in the environment"""
 
-        success_streak = random.randint(2, 5)
+        success_streak = random.randint(2, 6)
         if self.success_counter > success_streak:
             self.rule = np.random.choice([0, 1, 2])
         else:
