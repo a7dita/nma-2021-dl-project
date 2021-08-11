@@ -50,7 +50,7 @@ def output_csv(df):
     os.makedirs(datadir, exist_ok=True)
     df.to_csv(filepath)
 
-def create_agent(string):
+def create_agent(string, env):
     """Creates a new agent object from the module specified in input string."""
     return eval(string).Agent(env)
 
@@ -65,21 +65,18 @@ def create_agent(string):
 #         env.render()
 #         print(action, reward, obs, done)
 
-if __name__ == '__main__':
-    # parse cmd line arguments
-    cli_args = cli_args()
-
+def main(agent='vanilla_q', steps=250, output=None):
     # create and init environment
     env = wcst.WCST()
     env.reset()
 
     # create agent specified by cmd line option
-    agent = create_agent(cli_args['agent'])
+    agent = create_agent(agent, env)
 
     # create df to save some metadata
     df = pd.DataFrame()
 
-    for i in range(cli_args['steps']):
+    for i in range(steps):
         # FIXME so this is a bit clunky and should be changed probably
         s = agent._state
         a = agent._action
@@ -96,5 +93,17 @@ if __name__ == '__main__':
         # render state of agent and environment
         agent.render()
 
-    if cli_args['output'] == 'csv':
+    if output == 'csv':
         output_csv(df)
+
+if __name__ == '__main__':
+    # now, this is just a wrapper to parse cmd line arguments
+    # if you want you can run main() from another script or from notebook,
+    # and specify arguments there
+    cli_args = cli_args()
+
+    agent = cli_args['agent']
+    steps = cli_args['steps']
+    output = cli_args['output']
+
+    main(agent, steps, output)
