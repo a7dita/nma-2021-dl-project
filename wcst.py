@@ -8,12 +8,12 @@ from itertools import permutations
 from wcst_cards import card_generator
 
 N_DISCRETE_ACTIONS = 4 # pick one of the four discrete cards
+N_DISCRETE_CARDS = 24 # use a deck of 24 unique cards
 
 class WCST(gym.Env):
 
 
     """WCST environment that follows the OpenAI gym interface"""
-    metadata = {'render.modes': ['human']}
 
     def __init__(self):
         """Initiate the env with action and observation space"""
@@ -21,10 +21,10 @@ class WCST(gym.Env):
 
         # Actions are discrete:
         self.action_space = spaces.Discrete(N_DISCRETE_ACTIONS)
-        self.card_deck = card_generator()
+        self.card_deck = card_generator() # please do not delete the card deck! Not a duplicate variable!
         self.current_step = 0
         # Observations are discrete
-        self.observation_space = card_generator()
+        self.observation_space = spaces.Discrete(N_DISCRETE_CARDS) # please do not replace this w card_generator!
         self.rule = np.random.choice([0, 1, 2])
         self.success_counter = 0 # number of correct responses in a row
 
@@ -71,7 +71,7 @@ class WCST(gym.Env):
 
     def reset(self):
         """reset the state of the environment to the initial state"""
-        self.success_counter = 0 # number of correct responses in a row
+        self.success_counter = 0 # reset success streak counter
         return self._next_observation()
 
     def render(self, mode="human", close=False):
