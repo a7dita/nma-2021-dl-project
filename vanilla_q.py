@@ -43,26 +43,19 @@ class Agent:
     def q_values(self, state):
         return self._q
 
-    def _td_error(self, s, a, r, g, next_s):
-        # Compute the TD error.
-        max_q = self._q.loc[[next_s]].max(axis=1).values
-        cur_q = self._q.loc[[s], a].values
-        tde = r + g * max_q - cur_q
-        return tde
+    def select_action(self, state):
 
-    def select_action(self, state, policy=None):
-
-        if policy == None:
+        if self._behaviour_policy == None:
             # Default policy: random action
             # Exploration
             action = np.random.randint(low=0, high=self._num_actions)
 
-        elif policy == "simple-table-lookup":
+        elif self._behaviour_policy == "simple-table-lookup":
             # Select action by just looking at Q-table
             # Exploitation
             action = self._q[state].argmax()  # wrong indexing
 
-        elif policy == "epsilon-greedy":
+        elif self._behaviour_policy == "epsilon-greedy":
             # Select action based on the epsilon-greedy policy
             # Finding out the exploration-exploitation balance
             if self._epsilon < np.random.random():
@@ -72,6 +65,13 @@ class Agent:
 
         # TODO implement other policies later
         return action
+
+    def _td_error(self, s, a, r, g, next_s):
+        # Compute the TD error.
+        max_q = self._q.loc[[next_s]].max(axis=1).values
+        cur_q = self._q.loc[[s], a].values
+        tde = r + g * max_q - cur_q
+        return tde
 
     def render(self):
         self._env.render()
