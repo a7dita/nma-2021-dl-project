@@ -67,11 +67,11 @@ class Agent:
         # TODO implement other policies later
         return action
 
-    def _td_error(self, s, a, r, g, next_s, next_a):
+    def _td_error_sarsa(self, s, a, r, g, next_s, next_a):
         # Compute the TD error given the learning is on policy.
         next_q = self._q.loc[[next_s], next_a].values
         cur_q = self._q.loc[[s], a].values
-        tde = r + g * max_q - cur_q
+        tde = r + g * next_q - cur_q
         return tde
 
     def render(self):
