@@ -11,7 +11,7 @@ if __name__ == '__main__':
     for i in range(250):
         action = random.randint(1,4) # taking random actions on every step
         action, reward, obs, done, _ = env.step(action)
-        env.render()
+        print("Step {}".format(i))
         print("✨ Action taken: {}, reward: {}, card: {}, finished? {}".format(action, reward, obs, done))
         cum_reward += reward
     env.close()
