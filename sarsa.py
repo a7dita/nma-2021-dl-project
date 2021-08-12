@@ -1,4 +1,5 @@
-## TODO Create a vanilla Q-learning agent.
+## TODO Create a one-step on-policy SARSA
+
 import typing
 import numpy as np
 from typing import Callable, Sequence
@@ -43,45 +44,40 @@ class Agent:
     def q_values(self, state):
         return self._q
 
-    def select_action(self, state):
+    def select_action(self, state, policy=None):
 
-        if self._behaviour_policy == None:
+        if policy == None:
             # Default policy: random action
             # Exploration
             action = np.random.randint(low=0, high=self._num_actions)
 
-        elif self._behaviour_policy == "value_max":
+        elif policy == "simple-table-lookup":
             # Select action by just looking at Q-table
             # Exploitation
-            action = self._q.loc[[state]].idxmax(axis=1)
+            action = self._q[state].argmax()  # wrong indexing
 
-        elif self._behaviour_policy == "epsilon_greedy":
+        elif policy == "epsilon-greedy":
             # Select action based on the epsilon-greedy policy
             # Finding out the exploration-exploitation balance
             if self._epsilon < np.random.random():
-                action = self._q.loc[[state]].idxmax(axis=1).values
-                # print(f"action set to idxmax: {action}")
-                # q_value = self._q.loc[[state]].max(axis=1).values
-                # print(f"q_value of action: {q_value}")
+                action = self._q[state].argmax()  # wrong indexing
             else:
                 action = np.random.randint(low=0, high=self._num_actions)
-                # print(f"action set to random: {action}")
 
         # TODO implement other policies later
         return action
 
-    def _td_error(self, s, a, r, g, next_s):
-        # Compute the TD error.
-        max_q = self._q.loc[[next_s]].max(axis=1).values
-        cur_q = self._q.loc[[s], int(a)].values
-        tde = r + g * max_q - cur_q
+    def _td_error_sarsa(self, s, a, r, g, next_s, next_a):
+        # Compute the TD error given the learning is on policy.
+        next_q = self._q.loc[[next_s], next_a].values
+        cur_q = self._q.loc[[s], a].values
+        tde = r + g * next_q - cur_q
         return tde
 
     def render(self):
         self._env.render()
         print(f"New state: {self._state}")
         print(f"Prev. action: {self._action}")
-        print(f"Policy: {self._behaviour_policy}")
 
     def update(self):
         # Get action based on policy
@@ -89,13 +85,15 @@ class Agent:
         a = self.select_action(s)
 
         # Update environment, get next_s and reward as observations
-        a, r, next_s, _, _ = self._env.step(a)
+        a, r, next_s, _ = self._env.step(a)
 
+        # Calculate the next action that would be taken
+        next_a = self.select_action(next_s)
         # Get discount factor applied on future rewards
         g = self._discount_factor
 
         # Compute Temporal Difference error (TDE)
-        tde = self._td_error(s, a, r, g, next_s)
+        tde = self._td_error(s, a, r, g, next_s, next_a)
 
         # Update the Q-value table value at (s, a).
         self._q.loc[[s], a] += self._step_size * tde

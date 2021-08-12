@@ -16,6 +16,7 @@ ROOT_DIR = Path(__file__).parent
 
 #TODO low prio: move agents to subfolder, get all name strings from there
 LIST_OF_AGENTS = ['vanilla_q', 'memory_q', 'deep_q']
+LIST_OF_POLICIES = ['value_max', 'epsilon_greedy']
 
 def cli_args():
     """Parse arguments when running from command line.
@@ -31,10 +32,14 @@ def cli_args():
                         ', '.join(LIST_OF_AGENTS), metavar='')
 
     parser.add_argument('-s', '--steps', default=250,
-                        help='Number of steps to run the agent through the environment.')
+                        help='Number of steps to run the agent through the environment. Default: 250')
+
+    parser.add_argument('-p', '--policy', default=None, choices=LIST_OF_POLICIES,
+                        help='Policy to use for value-based agent. Default: None (random). Allowed values: '+
+                        ', '.join(LIST_OF_POLICIES), metavar='')
 
     parser.add_argument('-o', '--output', default=None,
-                        help='Output format of generated data.')
+                        help='Output format of generated data. Default: None')
 
     # returns dictionary of command line arguments
     # all of this is just for convenience
@@ -50,17 +55,17 @@ def output_csv(df):
     os.makedirs(datadir, exist_ok=True)
     df.to_csv(filepath)
 
-def create_agent(string, env):
+def create_agent(string, env, policy):
     """Creates a new agent object from the module specified in input string."""
-    return eval(string).Agent(env)
+    return eval(string).Agent(env, policy)
 
-def main(agent='vanilla_q', steps=250, output=None):
+def main(agent='vanilla_q', policy=None, steps=250, output=None):
     # create and init environment
     env = wcst.WCST()
     env.reset()
 
     # create agent specified by cmd line option
-    agent = create_agent(agent, env)
+    agent = create_agent(agent, env, policy)
 
     # create df to save some metadata
     df = pd.DataFrame()
@@ -92,7 +97,8 @@ if __name__ == '__main__':
     cli_args = cli_args()
 
     agent = cli_args['agent']
-    steps = cli_args['steps']
+    policy = cli_args['policy']
+    steps = int(cli_args['steps'])
     output = cli_args['output']
 
-    main(agent, steps, output)
+    main(agent, policy, steps, output)
