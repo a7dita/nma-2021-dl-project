@@ -3,8 +3,7 @@ import numpy as np
 import gym
 from gym import spaces
 from itertools import permutations
-from wcst_cards import card_generator
-from rule import map_rule_to_action
+from helper_functions import card_generator, map_rule_to_action
 
 N_DISCRETE_ACTIONS = 4  # pick one of the four discrete cards
 N_DISCRETE_CARDS = 24  # use a deck of 24 unique cards
