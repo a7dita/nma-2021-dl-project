@@ -5,6 +5,9 @@ from gym import spaces
 from itertools import permutations
 from helper_functions import card_generator, map_rule_to_action
 
+from PIL import Image, ImageDraw, ImageFilter
+import cv2
+
 N_DISCRETE_ACTIONS = 4  # pick one of the four discrete cards
 N_DISCRETE_CARDS = 24  # use a deck of 24 unique cards
 
@@ -76,8 +79,55 @@ class WCST(gym.Env):
         self.success_counter = 0  # reset success success_counter
         self.switch_counter = 0 # reset rule switch counter
 
-    def render(self, mode="human", close=False):
+    def render(self, mode="human", close=False, frame_num=1):
         """Render environment to screen"""
+        back = Image.open('stimuli/background.png')
+        im1 = Image.open('stimuli/cards/30.png')
+        im2 = Image.open('stimuli/cards/4.png')
+        im3 = Image.open('stimuli/cards/10.png')
+        im4 = Image.open('stimuli/cards/55.png')
+        im5 = Image.open(f'stimuli/{self.obs}.png')
+        back_im = back.copy()
+
+        if frame_num == 1:
+
+            back_im.paste(im1, (100, 50))
+            back_im.paste(im2, (300, 50))
+            back_im.paste(im3, (500, 50))
+            back_im.paste(im4, (700, 50))
+            back_im.paste(im5, (400, 300))
+            im_rgb = cv2.cvtColor(np.array(back_im), cv2.COLOR_BGR2RGB)
+            cv2.imshow("image", np.array(im_rgb))  # show it!
+            cv2.waitKey(5000)  # todo change value of freezing
+        else:
+            im1 = Image.open('stimuli/cards/30.png')
+            im2 = Image.open('stimuli/cards/4.png')
+            im3 = Image.open('stimuli/cards/10.png')
+            im4 = Image.open('stimuli/cards/55.png')
+            im5 = Image.open(f'stimuli/{self.obs}.png')
+            im6 = Image.open('stimuli/frame.png')
+            im7 = Image.open('stimuli/switch.jpg')
+            im8 = Image.open('stimuli/repeat.png')
+
+            pile = 1   # todo replace pile with correct pile number(1/2/3/4) and remove initialization.
+            if pile == 1:
+                back_im.paste(im6, (90, 40))
+            elif pile == 2:
+                back_im.paste(im6, (290, 40))
+            elif pile == 3:
+                back_im.paste(im6, (490, 40))
+            else:
+                back_im.paste(im6, (690, 40))
+
+            if reward > 0:   #todo return reward to this func
+                back_im.paste(im8, (170, 350))
+            else:
+                back_im.paste(im7, (170, 350))
+            im_rgb = cv2.cvtColor(np.array(back_im), cv2.COLOR_BGR2RGB)
+            cv2.imshow("image", np.array(im_rgb))  # show it!
+            cv2.waitKey(5000)  # todo change value of freezing
+
+
         print("Step: {current_step}".format(current_step=self.current_step))
         # TODO print more stuff here
 
