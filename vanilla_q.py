@@ -53,15 +53,19 @@ class Agent:
         elif self._behaviour_policy == "value_max":
             # Select action by just looking at Q-table
             # Exploitation
-            action = self._q.loc[[state]].max(axis=1).values
+            action = self._q.loc[[state]].idxmax(axis=1)
 
         elif self._behaviour_policy == "epsilon_greedy":
             # Select action based on the epsilon-greedy policy
             # Finding out the exploration-exploitation balance
             if self._epsilon < np.random.random():
-                action = self._q.loc[[state]].max(axis=1).values
+                action = self._q.loc[[state]].idxmax(axis=1).values
+                # print(f"action set to idxmax: {action}")
+                # q_value = self._q.loc[[state]].max(axis=1).values
+                # print(f"q_value of action: {q_value}")
             else:
                 action = np.random.randint(low=0, high=self._num_actions)
+                # print(f"action set to random: {action}")
 
         # TODO implement other policies later
         return action
@@ -69,7 +73,7 @@ class Agent:
     def _td_error(self, s, a, r, g, next_s):
         # Compute the TD error.
         max_q = self._q.loc[[next_s]].max(axis=1).values
-        cur_q = self._q.loc[[s], a].values
+        cur_q = self._q.loc[[s], int(a)].values
         tde = r + g * max_q - cur_q
         return tde
 
