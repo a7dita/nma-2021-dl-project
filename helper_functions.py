@@ -3,13 +3,12 @@ import numpy as np
 
 def card_generator(li_values=[1, 2, 3, 4], length=3):
     """generate cards given a list of values and the length of tuple."""
-
     cards = list(permutations(li_values, length))
 
     return cards
 
-def map_rule_to_action(action): # change this to the real function
-        return action
+def map_rule_to_action(action): # change this
+    return action
 
 def create_rule_series(total_time):
     rule_series = []
