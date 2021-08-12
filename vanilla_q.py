@@ -50,16 +50,16 @@ class Agent:
             # Exploration
             action = np.random.randint(low=0, high=self._num_actions)
 
-        elif self._behaviour_policy == "simple-table-lookup":
+        elif self._behaviour_policy == "value_max":
             # Select action by just looking at Q-table
             # Exploitation
-            action = self._q[state].argmax()  # wrong indexing
+            action = self._q.loc[[state]].max(axis=1).values
 
-        elif self._behaviour_policy == "epsilon-greedy":
+        elif self._behaviour_policy == "epsilon_greedy":
             # Select action based on the epsilon-greedy policy
             # Finding out the exploration-exploitation balance
             if self._epsilon < np.random.random():
-                action = self._q[state].argmax()  # wrong indexing
+                action = self._q.loc[[state]].max(axis=1).values
             else:
                 action = np.random.randint(low=0, high=self._num_actions)
 
@@ -77,6 +77,7 @@ class Agent:
         self._env.render()
         print(f"New state: {self._state}")
         print(f"Prev. action: {self._action}")
+        print(f"Policy: {self._behaviour_policy}")
 
     def update(self):
         # Get action based on policy
@@ -84,7 +85,7 @@ class Agent:
         a = self.select_action(s)
 
         # Update environment, get next_s and reward as observations
-        a, r, next_s, _ = self._env.step(a)
+        a, r, next_s, _, _ = self._env.step(a)
 
         # Get discount factor applied on future rewards
         g = self._discount_factor
