@@ -5,6 +5,7 @@ import deep_q
 import vanilla_q
 # import torch
 # import torch.nn as nn
+import numpy as np
 import pandas as pd
 import os
 import sys
@@ -70,22 +71,43 @@ def main(agent='vanilla_q', policy=None, steps=250, output=None):
     # create df to save some metadata
     df = pd.DataFrame()
 
+    # init reward counters
+    cr = 0
+    rr = [0]*7
+
     for i in range(steps):
+        # render state of agent and environment
+        if i % 100 == 0:
+            agent.render()
+
         # FIXME so this is a bit clunky and should be changed probably
-        s = agent._state
+        s = agent.get_state()
         a = agent._action
-        rule = agent._env.rule
-        q = agent._q.copy(deep=True)
+        ar = agent._rule
+        er = agent._env.rule
+        # q = agent._q.copy(deep=True)
+        #
+        # store cumulative and rolling rewards
+        if agent._streak > 0:
+            cr += 1
+            rr.pop(0)
+            rr.append(1)
+        else:
+            cr -= 1
+            rr.pop(0)
+            rr.append(-1)
 
         df = df.append({'state' : s,
                    'prev_action' : a,
-                   'rule' : rule,
-                   'q_table' : q}, ignore_index=True)
+                   'agent_rule' : ar,
+                   'env_rule' : er,
+                   'cumulative_reward' : cr,
+                   'rolling_reward' : np.sum(rr)},
+                   # 'q_table' : q},
+                   ignore_index=True)
 
         # update state of agent and environment
         agent.update()
-        # render state of agent and environment
-        agent.render()
 
     if output == 'csv':
         output_csv(df)

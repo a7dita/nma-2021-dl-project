@@ -3,7 +3,7 @@ import numpy as np
 import gym
 from gym import spaces
 from itertools import permutations
-from helper_functions import card_generator, map_rule_to_action
+from helper_functions import *
 
 from PIL import Image, ImageDraw, ImageFilter
 import cv2
@@ -34,11 +34,11 @@ class WCST(gym.Env):
 
         # initialise cards and rule
 
-        self.card = None # the card to categorise
         self.card_deck = card_generator()
+        self.card = self._next_observation() # the card to categorise
         # NOTE please do not delete the card deck! Not a duplicate variable - Now they are not. :P
-        self.rule = np.random.choice([0, 1, 2]) # Set first rule
-        # self.right_action = map_rule_to_action(self.rule) # Map rule {0,1,2} to action {1,2,3,4} — Might be unneeded
+        self.rule = np.random.choice([0, 1, 2])
+        self.right_action = map_rule_to_action(self.card, self.rule) # Map rule {0,1,2} to action {1,2,3,4}
 
         #initialise counters
         self.current_step = 0
@@ -61,9 +61,9 @@ class WCST(gym.Env):
 
         self.current_step += 1
 
-        choice = self.choice_cards[action - 1] # Choice conversion
+        choice = self.choice_cards[action] # Choice conversion
         step_rule =  self.rule # Record rule
-        rule_feature = self.card[self.rule] # Record right feature
+        # rule_feature = self.card[self.rule] # Record right feature
 
         if choice[self.rule] == self.card[self.rule]: # correct move
             self.card = self._next_observation() # show a new card - only if correct move was made
@@ -83,14 +83,14 @@ class WCST(gym.Env):
 
         done = self.current_step >= 250 or self.switch_counter >=41  # the game is over after 250 steps or 41 rule switches
 
-        return action, reward, obs, done, {}
+        return reward, obs, done, {}
 
     def reset(self):
         """reset the state of the environment to the initial state"""
         self.card = self._next_observation()
         self.current_step = 0
         self.rule = np.random.choice([0, 1, 2])
-        # self.right_action = map_rule_to_action(self.rule)
+        self.right_action = map_rule_to_action(self.card, self.rule)
         self.success_counter = 0  # reset success success_counter
         self.switch_counter = 0 # reset rule switch counter
 
