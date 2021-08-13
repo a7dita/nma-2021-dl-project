@@ -12,9 +12,9 @@ class Agent:
         self,
         env,
         policy=None,
-        step_size=0.3,
+        step_size=0.5,
         discount_factor=0.9,
-        epsilon=0.1,
+        epsilon=0.2,
     ):
 
         # Get size of state and action space from the environment

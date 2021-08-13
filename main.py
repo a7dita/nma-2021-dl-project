@@ -109,6 +109,7 @@ def main(agent='vanilla_q', policy=None, steps=250, output=None):
             agent.render()
             print(f"agent rule: {ar}")
             print(f"env rule: {er}")
+            print(f"current reward: {rr[-1]}")
             print(f"cumulative reward: {cr}")
             # print(f"rolling reward: {np.sum(rr)}")
 

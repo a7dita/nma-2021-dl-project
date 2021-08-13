@@ -60,7 +60,6 @@ class WCST(gym.Env):
 
         self.current_step += 1
 
-        self.card = self._next_observation() # show a new card
         # choice = self.choice_cards[int(action)] # Choice conversion
         # step_rule =  self.rule # Record rule
         # rule_feature = self.card[self.rule] # Record right feature
@@ -79,6 +78,7 @@ class WCST(gym.Env):
             self.rule = self.rule # Rule stays the same
             reward = -1 # Negative reward — Note (RE calculate_reward): Same as above
 
+        self.card = self._next_observation() # show a new card
         obs = self.card
 
         done = self.current_step >= 250 or self.switch_counter >=41  # the game is over after 250 steps or 41 rule switches
