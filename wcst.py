@@ -60,13 +60,13 @@ class WCST(gym.Env):
 
         self.current_step += 1
 
+        self.card = self._next_observation() # show a new card
         # choice = self.choice_cards[int(action)] # Choice conversion
         # step_rule =  self.rule # Record rule
         # rule_feature = self.card[self.rule] # Record right feature
 
         # if choice[self.rule] == self.card[self.rule]: # correct move
         if action == map_rule_to_action(self.card, self.rule):
-            self.card = self._next_observation() # show a new card - only if correct move was made
             self.success_counter += 1 # update success counter
             success_streak = random.randint(2, 5) # Randomize success threshold
             reward = 1 # Positive reward — Note (RE calculate_reward): Is this not enough? -- Probably enough, but having a separate function might be more readable?
