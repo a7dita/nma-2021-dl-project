@@ -76,9 +76,6 @@ def main(agent='vanilla_q', policy=None, steps=250, output=None):
     rr = [0]*7
 
     for i in range(steps):
-        # render state of agent and environment
-        if i % 100 == 0:
-            agent.render()
 
         # FIXME so this is a bit clunky and should be changed probably
         s = agent.get_state()
@@ -105,6 +102,15 @@ def main(agent='vanilla_q', policy=None, steps=250, output=None):
                    'rolling_reward' : np.sum(rr)},
                    # 'q_table' : q},
                    ignore_index=True)
+
+        # render state of agent and environment
+        # add print statements freely :)
+        if i % 100 == 0:
+            agent.render()
+            print(f"agent rule: {ar}")
+            print(f"env rule: {er}")
+            print(f"cumulative reward: {cr}")
+            # print(f"rolling reward: {np.sum(rr)}")
 
         # update state of agent and environment
         agent.update()
