@@ -59,7 +59,7 @@ class Agent:
         return self._q
 
     def get_state(self):
-        state = (self._obs, self._rule)#, self._streak)
+        state = (self._obs, self._rule, self._streak)
         return state
 
     def select_action(self, state):
