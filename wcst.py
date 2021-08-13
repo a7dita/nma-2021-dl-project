@@ -38,7 +38,6 @@ class WCST(gym.Env):
         self.card = self._next_observation() # the card to categorise
         # NOTE please do not delete the card deck! Not a duplicate variable - Now they are not. :P
         self.rule = np.random.choice([0, 1, 2])
-        self.right_action = map_rule_to_action(self.card, self.rule) # Map rule {0,1,2} to action {1,2,3,4}
 
         #initialise counters
         self.current_step = 0
@@ -61,11 +60,12 @@ class WCST(gym.Env):
 
         self.current_step += 1
 
-        choice = self.choice_cards[action] # Choice conversion
-        step_rule =  self.rule # Record rule
+        # choice = self.choice_cards[int(action)] # Choice conversion
+        # step_rule =  self.rule # Record rule
         # rule_feature = self.card[self.rule] # Record right feature
 
-        if choice[self.rule] == self.card[self.rule]: # correct move
+        # if choice[self.rule] == self.card[self.rule]: # correct move
+        if action == map_rule_to_action(self.card, self.rule):
             self.card = self._next_observation() # show a new card - only if correct move was made
             self.success_counter += 1 # update success counter
             success_streak = random.randint(2, 5) # Randomize success threshold

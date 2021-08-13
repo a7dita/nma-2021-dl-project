@@ -12,9 +12,9 @@ class Agent:
         self,
         env,
         policy=None,
-        step_size=0.5,
+        step_size=0.3,
         discount_factor=0.9,
-        epsilon=0.2,
+        epsilon=0.1,
     ):
 
         # Get size of state and action space from the environment
@@ -22,7 +22,7 @@ class Agent:
         self._num_actions = env.action_space.n
         self._streak_memory = 1
 
-        # Get list of possible states
+        # Get list of possible states (using Cartesian product)
         q_index = list(product(env.card_deck,
                                range(self._num_actions),
                                range(self._streak_memory+1)))
@@ -59,7 +59,7 @@ class Agent:
         return self._q
 
     def get_state(self):
-        state = (self._obs, self._rule, self._streak)
+        state = (self._obs, self._rule)#, self._streak)
         return state
 
     def select_action(self, state):
@@ -91,13 +91,18 @@ class Agent:
 
     def _td_error(self, s, a, r, g, next_s):
         # Compute the TD error.
+        # self._q.loc[[s]] finds the row from state ((card), rule, streak) tuple
+        # .max(axis=1) selects maximum value between columns (= actions 0, 1, 2, 3)
+
         max_q = self._q.loc[[next_s]].max(axis=1).values
         cur_q = self._q.loc[[s], int(a)].values
         tde = r + g * max_q - cur_q
         return tde
 
     def render(self):
-        self._env.render()
+        # self._env.render()
+
+        print(f"Step: {self._env.current_step}")
         # print(f"New obs: {self._obs}")
         # print(f"Prev. action: {self._action}")
         # print(f"Policy: {self._behaviour_policy}")
