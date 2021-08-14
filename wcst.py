@@ -70,8 +70,11 @@ class WCST(gym.Env):
             success_streak = random.randint(2, 5) # Randomize success threshold
             reward = 1 # Positive reward — Note (RE calculate_reward): Is this not enough? -- Probably enough, but having a separate function might be more readable?
             if self.success_counter > success_streak:
-                self.rule = np.random.choice([0, 1, 2]) # Note: Don't need right_action
-                self.switch_counter += 1 # Update switch counter
+                available_rules = [x for x in [0, 1, 2] if x != self.rule]
+                self.rule = np.random.choice(available_rules)
+                # NOTE We need to exclude the current rule
+                # Note: Don't need right_action
+                self.switch_counter += 1  # Update switch counter
 
         else: # wrong move
             self.success_counter = 0
