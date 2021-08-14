@@ -20,12 +20,20 @@ class Agent:
         # Get size of state and action space from the environment
         self._num_obs = env.observation_space.n
         self._num_actions = env.action_space.n
-        self._streak_memory = 1
+        self._streak_memory = 5
+        # NOTE memory length of 5 will accomodate all necessary past information
+        # REVIEW can we set the memory length from the input during the instantiation of the agent?
 
         # Get list of possible states (using Cartesian product)
-        q_index = list(product(env.card_deck,
-                               range(self._num_actions),
-                               range(self._streak_memory+1)))
+        q_index = list(
+            product(
+                env.card_deck,
+                range(self._num_actions),
+                # NOTE The previous rule to be remembered, not the particular card.
+                # NOTE It is not 3 but 4, because sometimes there will be "odd response"
+                range(self._streak_memory + 1),
+            )
+        )
 
         self._num_states = len(q_index)
 
@@ -115,13 +123,14 @@ class Agent:
         a = self.select_action(s)
 
         # Update environment, get next card and reward
-        r, next_obs, _, _ = self._env.step(a)
+        r, streak, next_obs, _, _ = self._env.step(a)
 
         # Update internal streak count
-        if r == 1:
-            self._streak = min(self._streak + 1, self._streak_memory)
-        else:
-            self._streak = 0
+        self._streak = min(streak, self._streak_memory)
+        # if r == 1:
+        #     self._streak = min(self._streak + 1, self._streak_memory)
+        # else:
+        #     self._streak = 0
 
         # Update the current state.
         self._action = a
@@ -139,4 +148,3 @@ class Agent:
 
         # Update the Q-value table value at (s, a).
         self._q.loc[[s], a] += self._step_size * tde
-

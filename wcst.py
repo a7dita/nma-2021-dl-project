@@ -93,7 +93,7 @@ class WCST(gym.Env):
         done = self.current_step >= 250 or self.switch_counter >= 41
         # game over after 250 steps or 41 rule switches
 
-        return reward, obs, done, {}
+        return reward, self.success_counter, obs, done, {}
 
     def reset(self):
         """reset the state of the environment to the initial state"""
