@@ -101,7 +101,7 @@ class WCST(gym.Env):
         self.current_step = 0
         self.rule = np.random.choice([0, 1, 2])
         # self.right_action = map_rule_to_action(self.card, self.rule)
-        # NOTE Don't need right_action at initialization.
+        # NOTE Don't need right_action at initialization/reset.
         self.success_counter = 0  # reset success success_counter
         self.switch_counter = 0  # reset rule switch counter
 
