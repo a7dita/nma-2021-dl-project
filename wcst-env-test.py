@@ -18,6 +18,7 @@ if __name__ == "__main__":
                 action, reward, obs, done
             )
         )
+        env.render()
         cum_reward += reward
     env.close()
     print("Cumulative reward: {} 🪙".format(cum_reward))

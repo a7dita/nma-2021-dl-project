@@ -112,7 +112,7 @@ class WCST(gym.Env):
         im2 = Image.open("stimuli/cards/4.png")
         im3 = Image.open("stimuli/cards/10.png")
         im4 = Image.open("stimuli/cards/55.png")
-        im5 = Image.open(f"stimuli/{self.obs}.png")
+        im5 = Image.open(f"stimuli/{''.join(str(num) for num in self.card)}.png")
         back_im = back.copy()
 
         if frame_num == 1:
@@ -131,7 +131,7 @@ class WCST(gym.Env):
             im2 = Image.open("stimuli/cards/4.png")
             im3 = Image.open("stimuli/cards/10.png")
             im4 = Image.open("stimuli/cards/55.png")
-            im5 = Image.open(f"stimuli/{self.obs}.png")
+            im5 = Image.open(f"stimuli/{''.join(str(num) for num in self.card)}.png")
             im6 = Image.open("stimuli/frame.png")
             im7 = Image.open("stimuli/switch.jpg")
             im8 = Image.open("stimuli/repeat.png")
