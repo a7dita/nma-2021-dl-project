@@ -10,11 +10,11 @@ class Agent:
         self,
         env,
         policy=None,
-        step_size=0.5,
         discount_factor=0.9,
-        epsilon=0.2,
+        step_size=0.1, epsilon=0.0, #good parameters found by trial
     ):
 
+        print(f"agent init w/ step_size {step_size}, epsilon {epsilon}")
         # Get size of state and action space from the environment
         self._num_obs = env.observation_space.n
         self._num_actions = env.action_space.n
