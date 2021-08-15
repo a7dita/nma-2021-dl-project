@@ -1,14 +1,23 @@
 from itertools import permutations
 import numpy as np
 
-def card_generator(li_values=[1, 2, 3, 4], length=3):
+def card_generator(li_values=[0, 1, 2, 3], length=3):
     """generate cards given a list of values and the length of tuple."""
     cards = list(permutations(li_values, length))
 
     return cards
 
-def map_rule_to_action(action): # change this
+def map_rule_to_action(card, rule):
+    action = card[rule]
     return action
+
+def map_action_to_rule(card, action):
+    try:
+        rule = card.index(action)
+    except ValueError:
+        rule = 3 #odd response
+
+    return rule
 
 def create_rule_series(total_time):
     rule_series = []

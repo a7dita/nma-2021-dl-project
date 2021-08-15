@@ -3,7 +3,7 @@ import numpy as np
 import gym
 from gym import spaces
 from itertools import permutations
-from helper_functions import card_generator, map_rule_to_action
+from helper_functions import *
 
 from PIL import Image, ImageDraw, ImageFilter
 import cv2
@@ -25,68 +25,94 @@ class WCST(gym.Env):
         # Observations are discrete
         self.observation_space = spaces.Discrete(N_DISCRETE_CARDS)
 
+        # Card choices (action)
+
+        self.choice_cards = [
+            (1, 1, 1),  # 1 blue ball
+            (2, 2, 2),  # 2 yellow crosses
+            (3, 3, 3),  # 3 red triangles
+            (4, 4, 4),  # 4 green stars
+        ]
+
         # initialise cards and rule
 
-        self.card = None # the card to categorise
         self.card_deck = card_generator()
+        self.card = self._next_observation()  # the card to categorise
         # NOTE please do not delete the card deck! Not a duplicate variable - Now they are not. :P
         self.rule = np.random.choice([0, 1, 2])
-        self.right_action = map_rule_to_action(self.rule) # Map rule {0,1,2} to action {1,2,3,4}
 
-        #initialise counters
+        # initialise counters
         self.current_step = 0
         self.success_counter = 0  # number of correct responses in a row
-        self.switch_counter = 0 # keep track of rule switches; max should be 41
+        self.switch_counter = 0  # keep track of rule switches; max should be 41
 
     def _next_observation(self):
         """a card is shown with values of (colour, form, num of elements)"""
-        return random.choice(self.card_deck)  # please do not replace this w observation space
+        return random.choice(self.card_deck)
+        # NOTE please do not replace this w observation space
         # NOTE do we discard used cards? -- no, we have 24 unique cards but 250 trials
 
-    def _calculate_reward(self, action):
-        """Give reward of +1 if the action is correct
-        or -1 otherwise"""
-        reward = +1 if action == self.right_action else -1
-        return reward
+    # def _calculate_reward(self, action):
+    #     """Give reward of +1 if the action is correct
+    #     or -1 otherwise"""
+    #     reward = +1 if action == self.right_action else -1
+    #     return reward
 
     def step(self, action):
         """Take one step in the environment"""
+
         self.current_step += 1
 
-        if action == self.right_action: # correct move
-            obs = self._next_observation() # show a new card
-            self.card = obs
-            self.success_counter += 1 # update success counter
-            success_streak = random.randint(2, 5) # check if it's time to switch rule
+        # choice = self.choice_cards[int(action)] # Choice conversion
+        # step_rule =  self.rule # Record rule
+        # rule_feature = self.card[self.rule] # Record right feature
+
+        # if choice[self.rule] == self.card[self.rule]: # correct move
+        if action == map_rule_to_action(self.card, self.rule):
+            self.success_counter += 1  # update success counter
+            success_streak = random.randint(2, 5)  # Randomize success threshold
+            reward = 1  # Positive reward
+            # NOTE (RE calculate_reward): Is this not enough? -- Probably enough, but having a separate function might be more readable?
+
             if self.success_counter > success_streak:
-                self.rule = np.random.choice([0, 1, 2])
-                self.right_action = map_rule_to_action(self.rule)
+                available_rules = [x for x in [0, 1, 2] if x != self.rule]
+                self.rule = np.random.choice(available_rules)
+                # NOTE We need to exclude the current rule
+                # NOTE Don't need right_action
+                self.switch_counter += 1  # Update switch counter
 
-        else: # wrong move
+        else:  # wrong move
             self.success_counter = 0
-            obs = self.card
-        reward = self._calculate_reward(action)
-        done = self.current_step >= 250 or self.switch_counter >=41  # the game is over after 250 steps or 41 rule switches
+            self.rule = self.rule  # Rule stays the same
+            reward = -1  # Negative reward
+            # NOTE (RE calculate_reward): Same as above
 
-        return action, reward, obs, done, {}
+        self.card = self._next_observation()  # show a new card
+        obs = self.card
+
+        done = self.current_step >= 250 or self.switch_counter >= 41
+        # game over after 250 steps or 41 rule switches
+
+        return reward, obs, done, {}
 
     def reset(self):
         """reset the state of the environment to the initial state"""
         self.card = self._next_observation()
         self.current_step = 0
         self.rule = np.random.choice([0, 1, 2])
-        self.right_action = map_rule_to_action(self.rule)
+        # self.right_action = map_rule_to_action(self.card, self.rule)
+        # NOTE Don't need right_action at initialization/reset.
         self.success_counter = 0  # reset success success_counter
-        self.switch_counter = 0 # reset rule switch counter
+        self.switch_counter = 0  # reset rule switch counter
 
     def render(self, mode="human", close=False, frame_num=1):
         """Render environment to screen"""
-        back = Image.open('stimuli/background.png')
-        im1 = Image.open('stimuli/cards/30.png')
-        im2 = Image.open('stimuli/cards/4.png')
-        im3 = Image.open('stimuli/cards/10.png')
-        im4 = Image.open('stimuli/cards/55.png')
-        im5 = Image.open(f'stimuli/{self.obs}.png')
+        back = Image.open("stimuli/background.png")
+        im1 = Image.open("stimuli/cards/30.png")
+        im2 = Image.open("stimuli/cards/4.png")
+        im3 = Image.open("stimuli/cards/10.png")
+        im4 = Image.open("stimuli/cards/55.png")
+        im5 = Image.open(f"stimuli/{''.join(str(num) for num in self.card)}.png")
         back_im = back.copy()
 
         if frame_num == 1:
@@ -98,18 +124,20 @@ class WCST(gym.Env):
             back_im.paste(im5, (400, 300))
             im_rgb = cv2.cvtColor(np.array(back_im), cv2.COLOR_BGR2RGB)
             cv2.imshow("image", np.array(im_rgb))  # show it!
-            cv2.waitKey(5000)  # todo change value of freezing
+            cv2.waitKey(5000)
+            # TODO change value of freezing
         else:
-            im1 = Image.open('stimuli/cards/30.png')
-            im2 = Image.open('stimuli/cards/4.png')
-            im3 = Image.open('stimuli/cards/10.png')
-            im4 = Image.open('stimuli/cards/55.png')
-            im5 = Image.open(f'stimuli/{self.obs}.png')
-            im6 = Image.open('stimuli/frame.png')
-            im7 = Image.open('stimuli/switch.jpg')
-            im8 = Image.open('stimuli/repeat.png')
+            im1 = Image.open("stimuli/cards/30.png")
+            im2 = Image.open("stimuli/cards/4.png")
+            im3 = Image.open("stimuli/cards/10.png")
+            im4 = Image.open("stimuli/cards/55.png")
+            im5 = Image.open(f"stimuli/{''.join(str(num) for num in self.card)}.png")
+            im6 = Image.open("stimuli/frame.png")
+            im7 = Image.open("stimuli/switch.jpg")
+            im8 = Image.open("stimuli/repeat.png")
 
-            pile = 1   # todo replace pile with correct pile number(1/2/3/4) and remove initialization.
+            pile = 1
+            # TODO replace pile with correct pile number(1/2/3/4) and remove initialization.
             if pile == 1:
                 back_im.paste(im6, (90, 40))
             elif pile == 2:
@@ -119,14 +147,15 @@ class WCST(gym.Env):
             else:
                 back_im.paste(im6, (690, 40))
 
-            if reward > 0:   #todo return reward to this func
+            if reward > 0:
+                # TODO return reward to this func
                 back_im.paste(im8, (170, 350))
             else:
                 back_im.paste(im7, (170, 350))
             im_rgb = cv2.cvtColor(np.array(back_im), cv2.COLOR_BGR2RGB)
             cv2.imshow("image", np.array(im_rgb))  # show it!
-            cv2.waitKey(5000)  # todo change value of freezing
-
+            cv2.waitKey(5000)
+            # TODO change value of freezing
 
         print("Step: {current_step}".format(current_step=self.current_step))
         # TODO print more stuff here
