@@ -108,10 +108,10 @@ class WCST(gym.Env):
     def render(self, mode="human", close=False, frame_num=1):
         """Render environment to screen"""
         back = Image.open("stimuli/background.png")
-        im1 = Image.open("stimuli/cards/30.png")
-        im2 = Image.open("stimuli/cards/4.png")
-        im3 = Image.open("stimuli/cards/10.png")
-        im4 = Image.open("stimuli/cards/55.png")
+        im1 = Image.open("stimuli/cards/")
+        im2 = Image.open("stimuli/cards/")
+        im3 = Image.open("stimuli/cards/")
+        im4 = Image.open("stimuli/cards/")
         im5 = Image.open(f"stimuli/{''.join(str(num) for num in self.card)}.png")
         back_im = back.copy()
 
@@ -127,10 +127,10 @@ class WCST(gym.Env):
             cv2.waitKey(5000)
             # TODO change value of freezing
         else:
-            im1 = Image.open("stimuli/cards/30.png")
-            im2 = Image.open("stimuli/cards/4.png")
-            im3 = Image.open("stimuli/cards/10.png")
-            im4 = Image.open("stimuli/cards/55.png")
+            im1 = Image.open("stimuli/cards/")
+            im2 = Image.open("stimuli/cards/")
+            im3 = Image.open("stimuli/cards/")
+            im4 = Image.open("stimuli/cards/")
             im5 = Image.open(f"stimuli/{''.join(str(num) for num in self.card)}.png")
             im6 = Image.open("stimuli/frame.png")
             im7 = Image.open("stimuli/switch.jpg")
