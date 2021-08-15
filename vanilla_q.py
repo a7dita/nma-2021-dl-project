@@ -2,7 +2,6 @@
 import typing
 import numpy as np
 from typing import Callable, Sequence
-import pandas as pd
 import helper_functions
 from itertools import product
 
@@ -35,13 +34,12 @@ class Agent:
             )
         )
 
-        self._num_states = len(q_index)
+        # Create a map of Q-values with possible states as indexes.
+        self._q = {}
+        for idx in q_index:
+            self._q[idx] = np.zeros((self._num_actions, 1))
 
-        # Create a table of Q-values with possible states as indexes.
-        self._q = pd.DataFrame(
-            index=pd.MultiIndex.from_tuples(q_index),
-            data=np.zeros((self._num_states, self._num_actions)),
-        )
+        self._num_states = len(q_index)
 
         # Store algorithm hyper-parameters.
         self._step_size = step_size
@@ -80,30 +78,26 @@ class Agent:
         elif self._behaviour_policy == "value_max":
             # Select action by just looking at Q-table
             # Exploitation
-            action = self._q.loc[[state]].idxmax(axis=1).values
+            action = np.argmax(self._q[state])
 
         elif self._behaviour_policy == "epsilon_greedy":
             # Select action based on the epsilon-greedy policy
             # Finding out the exploration-exploitation balance
             if self._epsilon < np.random.random():
-                action = self._q.loc[[state]].idxmax(axis=1).values
-                # print(f"action set to idxmax: {action}")
-                # q_value = self._q.loc[[state]].max(axis=1).values
-                # print(f"q_value of action: {q_value}")
+                action = np.argmax(self._q[state])
             else:
                 action = np.random.randint(low=0, high=self._num_actions)
-                # print(f"action set to random: {action}")
 
         # TODO implement other policies later
         return action
 
     def _td_error(self, s, a, r, g, next_s):
         # Compute the TD error.
-        # self._q.loc[[s]] finds the row from state ((card), rule, streak) tuple
-        # .max(axis=1) selects maximum value between columns (= actions 0, 1, 2, 3)
+        # self._q[s] uses ((card), rule, streak) tuple to lookup action value list
+        # np.amax selects maximum _value_ from list
 
-        max_q = self._q.loc[[next_s]].max(axis=1).values
-        cur_q = self._q.loc[[s], int(a)].values
+        max_q = np.amax(self._q[next_s])
+        cur_q = self._q[s][a]
         tde = r + g * max_q - cur_q
         return tde
 
@@ -147,4 +141,4 @@ class Agent:
         tde = self._td_error(s, a, r, g, next_s)
 
         # Update the Q-value table value at (s, a).
-        self._q.loc[[s], a] += self._step_size * tde
+        self._q[s][a] += self._step_size * tde
