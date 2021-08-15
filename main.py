@@ -107,9 +107,9 @@ def main(agent='vanilla_q', policy=None, steps=250, output=None):
         # add print statements freely :)
         if i % 100 == 0:
             agent.render()
-            print(f"agent rule: {ar}")
-            print(f"env rule: {er}")
-            print(f"current reward: {rr[-1]}")
+            # print(f"agent rule: {ar}")
+            # print(f"env rule: {er}")
+            # print(f"current reward: {rr[-1]}")
             print(f"cumulative reward: {cr}")
             # print(f"rolling reward: {np.sum(rr)}")
 
@@ -118,6 +118,8 @@ def main(agent='vanilla_q', policy=None, steps=250, output=None):
 
     if output == 'csv':
         output_csv(df)
+
+    return cr
 
 if __name__ == '__main__':
     # now, this is just a wrapper to parse cmd line arguments
