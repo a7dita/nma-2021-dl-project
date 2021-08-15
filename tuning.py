@@ -2,6 +2,7 @@
 
 import main
 import optuna
+import joblib
 
 ######################################################################
 # TODO: implement tuning functions to search for optimal hyperparameters; for brevity make use of functions defined in main.py
@@ -45,3 +46,19 @@ import optuna
 # # 3. Create a study object and optimize the objective function.
 # study = optuna.create_study(direction='maximize')
 # study.optimize(objective, n_trials=100)
+
+def objective(trial):
+    # Suggest values for vanilla_q epsilon, step_size
+    agent = 'vanilla_q'
+    policy = 'epsilon_greedy'
+    steps = 4000
+
+    epsilon = trial.suggest_float("epsilon", 0.0, 0.25, step=0.05)
+    step_size = trial.suggest_float("step_size", 0.0, 1.0, step=0.05)
+
+    return main.main(agent, policy, steps, epsilon=epsilon, step_size=step_size)
+
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=200)
+
+joblib.dump(study, "study.pkl")
