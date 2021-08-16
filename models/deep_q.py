@@ -1,10 +1,9 @@
 ## TODO Create a deep Q-learning agent.
-import wcst
 import collections
 import torch
 import torch.nn as nn
 import copy
-from replay_buffer import *
+from helper_functions import ReplayBuffer
 
 # Create a convenient container for the SARS tuples required by NFQ.
 Transitions = collections.namedtuple(
