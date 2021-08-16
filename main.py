@@ -43,14 +43,14 @@ def cli_args():
     parser.add_argument(
         "-s",
         "--steps",
-        default=250,
+        default=2000,
         help="Number of steps to run the agent through the environment. Default: 250",
     )
 
     parser.add_argument(
         "-p",
         "--policy",
-        default=None,
+        default="epsilon_greedy",
         choices=LIST_OF_POLICIES,
         help="Policy to use for value-based agent. Default: None (random). Allowed values: "
         + ", ".join(LIST_OF_POLICIES),
