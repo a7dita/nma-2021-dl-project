@@ -46,11 +46,11 @@ def cli_args():
     # all of this is just for convenience
     return vars(parser.parse_args())
 
-def output_csv(df):
+def output_csv(df, metadata):
     """Writes a dataframe to root/gen_data/YY-MM-DD_HHMMSS.csv"""
     timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     datadir = ROOT_DIR.joinpath("gen_data")
-    filepath = datadir.joinpath(timestamp + ".csv")
+    filepath = datadir.joinpath(f"{timestamp}_{metadata}.csv")
 
     # Create directory if needed
     os.makedirs(datadir, exist_ok=True)
@@ -94,14 +94,15 @@ def main(agent='vanilla_q', policy=None, steps=250, output=None):
             rr.pop(0)
             rr.append(-1)
 
-        df = df.append({'state' : s,
-                   'prev_action' : a,
-                   'agent_rule' : ar,
-                   'env_rule' : er,
-                   'cumulative_reward' : cr,
-                   'rolling_reward' : np.sum(rr)},
-                   # 'q_table' : q},
-                   ignore_index=True)
+        if output == 'csv':
+            df = df.append({'state' : s,
+                    'prev_action' : a,
+                    'agent_rule' : ar,
+                    'env_rule' : er,
+                    'cumulative_reward' : cr,
+                    'rolling_reward' : np.sum(rr)},
+                    # 'q_table' : q},
+                        ignore_index=True)
 
         # render state of agent and environment
         # add print statements freely :)
@@ -117,7 +118,8 @@ def main(agent='vanilla_q', policy=None, steps=250, output=None):
         agent.update()
 
     if output == 'csv':
-        output_csv(df)
+        metadata = f"{cli_args['agent']}_{policy}_{steps}st_epsilon{agent._epsilon}_step{agent._step_size}_memory{agent._streak_memory}"
+        output_csv(df, metadata)
 
     return cr
 

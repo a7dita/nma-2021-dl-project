@@ -11,14 +11,14 @@ class Agent:
         env,
         policy=None,
         discount_factor=0.9,
-        step_size=0.1, epsilon=0.0, #good parameters found by trial
+        step_size=0.1, epsilon=0.05, #good parameters found by trial
     ):
 
         print(f"agent init w/ step_size {step_size}, epsilon {epsilon}")
         # Get size of state and action space from the environment
         self._num_obs = env.observation_space.n
         self._num_actions = env.action_space.n
-        self._streak_memory = 1
+        self._streak_memory = 6
 
         # Get list of possible states (using Cartesian product)
         q_index = list(product(env.card_deck,
