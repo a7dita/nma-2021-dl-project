@@ -70,7 +70,7 @@ class WCST(gym.Env):
         # if choice[self.rule] == self.card[self.rule]: # correct move
         if action == map_rule_to_action(self.card, self.rule):
             self.success_counter += 1  # update success counter
-            success_streak = random.randint(2, 5)  # Randomize success threshold
+            success_streak = min( np.random.geometric(0.45, size = 1) + 1, 12 )  # Randomize success threshold
             reward = 1  # Positive reward
             # NOTE (RE calculate_reward): Is this not enough? -- Probably enough, but having a separate function might be more readable?
 
