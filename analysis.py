@@ -44,3 +44,24 @@ def get_set_loss_error(csv_file: str):
     set_loss_error = set_loss_error / repeat_count
 
     return set_loss_error
+
+
+def plot_iri_distribution_learning(csv_file: str):
+
+    df = pd.read_csv(csv_file, sep=",")
+    d = df["current_reward"].to_numpy(dtype=int)
+
+    li = []
+    streak = 0
+
+    for i in range(1, d.shape[0]):
+
+        if d[i] == 1:
+            streak += 1
+        elif d[i] == -1 and d[i - 1] == 1:
+
+            li.append(streak)
+            streak = 0
+
+    plt.hist(li)
+    plt.axvline(sum(li) / len(li), color="r", linestyle="dashed", linewidth=1)
