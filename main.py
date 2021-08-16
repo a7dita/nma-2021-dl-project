@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # The parts that aren't ready yet are commented out
 import wcst
-import deep_q
-import vanilla_q
+import models.deep_q as deep_q
+import models.vanilla_q as vanilla_q
 
 # import torch
 # import torch.nn as nn
