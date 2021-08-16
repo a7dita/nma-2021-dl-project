@@ -43,7 +43,7 @@ def cli_args():
     parser.add_argument(
         "-s",
         "--steps",
-        default=2000,
+        default=10000,
         help="Number of steps to run the agent through the environment. Default: 250",
     )
 
