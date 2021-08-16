@@ -74,7 +74,7 @@ class WCST(gym.Env):
             reward = 1  # Positive reward
             # NOTE (RE calculate_reward): Is this not enough? -- Probably enough, but having a separate function might be more readable?
 
-            if self.success_counter > success_streak:
+            if self.success_counter >= success_streak:
                 available_rules = [x for x in [0, 1, 2] if x != self.rule]
                 self.rule = np.random.choice(available_rules)
                 # NOTE We need to exclude the current rule
