@@ -4,9 +4,8 @@ import wcst
 import models.deep_q as deep_q
 import models.vanilla_q as vanilla_q
 import models.sarsa as sarsa
-
-# import torch
-# import torch.nn as nn
+import torch
+import torch.nn as nn
 import numpy as np
 import pandas as pd
 import os
@@ -14,6 +13,8 @@ import sys
 import argparse
 from pathlib import Path
 from datetime import datetime
+
+from helper_functions import nn_loop
 
 ROOT_DIR = Path(__file__).parent
 
@@ -76,7 +77,6 @@ def cli_args():
     # all of this is just for convenience
     return vars(parser.parse_args())
 
-
 def output_csv(df, metadata):
     """Writes a dataframe to root/gen_data/YY-MM-DD_HHMMSS.csv"""
     timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
@@ -92,24 +92,7 @@ def create_agent(string, env, policy):
     """Creates a new agent object from the module specified in input string."""
     return eval(string).Agent(env, policy)
 
-
-def main(
-    agent="vanilla_q", policy=None, steps=250, output=None, graphical_render=False
-):
-    # create and init environment
-    env = wcst.WCST()
-    env.reset()
-
-    # create agent specified by cmd line option
-    agent = create_agent(agent, env, policy)
-
-    # create df to save some metadata
-    df = pd.DataFrame()
-
-    # init reward counters
-    cr = 0
-    rr = [0] * 7
-
+def vanilla_q_loop(env, agent, steps):
     for i in range(steps):
 
         # FIXME so this is a bit clunky and should be changed probably
@@ -158,11 +141,66 @@ def main(
         # update state of agent and environment
         agent.update()
 
-    if output == "csv":
-        metadata = f"{cli_args['agent'][:4]}_{policy[:4]}_{steps}st_e{agent._epsilon}_step{agent._step_size}_mem{agent._streak_memory}"
-        output_csv(df, metadata)
+def main(
+    agent="vanilla_q", policy=None, steps=250, output=None, graphical_render=False
+):
+    # create and init environment
+    env = wcst.WCST()
+    env.reset()
 
-    return cr
+    # create agent specified by cmd line option
+
+    # create df to save some metadata
+    # df = pd.DataFrame()
+
+    # init reward counters
+    # cr = 0
+    # rr = [0] * 7
+
+    if agent == "vanilla_q":
+        agent = create_agent(agent, env, policy)
+        vanilla_q_loop(env, agent, steps)
+    elif agent == "deep_q":
+        q_network = nn.Sequential(nn.Linear(4, 50),
+                                nn.ReLU(),
+                                nn.Linear(50, 50),
+                                nn.ReLU(),
+                                nn.Linear(50, env.action_space.n))
+
+        # Build the trainable Q-learning agent
+        agent = deep_q.Agent(
+            env,
+            q_network,
+            epsilon=epsilon,
+            replay_capacity=100_000,
+            batch_size=10,
+            learning_rate=1e-3)
+
+        returns = nn_loop(
+            environment=env,
+            agent=agent,
+            num_episodes=500,
+            logger_time_delta=1.,
+            log_loss=True)
+
+        # @title Evaluating the agent (set $\epsilon=0$)
+        # Temporarily change epsilon to be more greedy; remember to change it back.
+        agent._epsilon = 0.0
+
+        # Record a few episodes.
+        frames = evaluate(environment, agent, evaluation_episodes=5)
+
+        # Change epsilon back.
+        agent._epsilon = epsilon
+
+        # Display the video of the episodes.
+        display_video(frames, frame_rate=6)
+
+    # if output == "csv":
+    #     metadata = f"{cli_args['agent'][:4]}_{policy[:4]}_{steps}st_e{agent._epsilon}_step{agent._step_size}_mem{agent._streak_memory}"
+    #     output_csv(df, metadata)
+
+    # return cr
 
 
 if __name__ == "__main__":
@@ -192,23 +230,11 @@ if __name__ == "__main__":
 # environment, environment_spec = setup_environment(grid)
 
 # # Define the neural function approximator (aka Q network).
-# q_network = nn.Sequential(nn.Linear(4, 50),
-#                           nn.ReLU(),
-#                           nn.Linear(50, 50),
-#                           nn.ReLU(),
-#                           nn.Linear(50, environment_spec.actions.num_values))
-# # Build the trainable Q-learning agent
-# agent = NeuralFittedQAgent(
-#     environment_spec,
-#     q_network,
-#     epsilon=epsilon,
-#     replay_capacity=100_000,
-#     batch_size=10,
-#     learning_rate=1e-3)
 
-# returns = run_loop(
-#     environment=environment,
-#     agent=agent,
-#     num_episodes=500,
-#     logger_time_delta=1.,
-#     log_loss=True)
+# @title Run loop  { form-width: "30%" }
+# @markdown This function runs an agent in the environment for a number of
+# @markdown episodes, allowing it to learn.
+
+# @markdown *Double-click* to inspect the `run_loop` function.
+
+

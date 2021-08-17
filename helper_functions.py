@@ -78,3 +78,93 @@ class ReplayBuffer(object):
 
     def is_ready(self, batch_size: int) -> bool:
         return batch_size <= len(self.buffer)
+
+def run_loop(environment,
+             agent,
+             num_episodes=None,
+             num_steps=None,
+             logger_time_delta=1.,
+             label='training_loop',
+             log_loss=False,
+             ):
+  """Perform the run loop.
+
+  We are following the Acme run loop.
+
+  Run the environment loop for `num_episodes` episodes. Each episode is itself
+  a loop which interacts first with the environment to get an observation and
+  then give that observation to the agent in order to retrieve an action. Upon
+  termination of an episode a new episode will be started. If the number of
+  episodes is not given then this will interact with the environment
+  infinitely.
+
+  Args:
+    environment: dm_env used to generate trajectories.
+    agent: acme.Actor for selecting actions in the run loop.
+    num_steps: number of steps to run the loop for. If `None` (default), runs
+      without limit.
+    num_episodes: number of episodes to run the loop for. If `None` (default),
+      runs without limit.
+    logger_time_delta: time interval (in seconds) between consecutive logging
+      steps.
+    label: optional label used at logging steps.
+  """
+  logger = loggers.TerminalLogger(label=label, time_delta=logger_time_delta)
+  iterator = range(num_episodes) if num_episodes else itertools.count()
+  all_returns = []
+
+  num_total_steps = 0
+  for episode in iterator:
+    # Reset any counts and start the environment.
+    start_time = time.time()
+    episode_steps = 0
+    episode_return = 0
+    episode_loss = 0
+
+    observation = environment.reset()
+
+    # Make the first observation.
+    agent.observe_first(observation)
+
+    # Run an episode.
+    # while not timestep.last():
+    #
+    # Generate an action from the agent's policy and step the environment.
+    action = agent.select_action(timestep.observation)
+    reward, next_obs, done, _ = environment.step(action)
+    if not done:
+
+      # Have the agent observe the timestep and let the agent update itself.
+      # TODO how to implement discount???
+      agent.observe(action, reward, next_obs, discount)
+      agent.update()
+
+      # Book-keeping.
+      episode_steps += 1
+      num_total_steps += 1
+      episode_return += reward
+
+      if log_loss:
+        episode_loss += agent.last_loss
+
+      if num_steps is not None and num_total_steps >= num_steps:
+        break
+
+    # Collect the results and combine with counts.
+    steps_per_second = episode_steps / (time.time() - start_time)
+    result = {
+        'episode': episode,
+        'episode_length': episode_steps,
+        'episode_return': episode_return,
+    }
+    if log_loss:
+      result['loss_avg'] = episode_loss/episode_steps
+
+    all_returns.append(episode_return)
+
+    # Log the given results.
+    logger.write(result)
+
+    if num_steps is not None and num_total_steps >= num_steps:
+      break
+  return all_returns

@@ -102,10 +102,9 @@ class Agent():
     self.last_loss = loss.detach().numpy()
 
     self._replay
-  # TODO timestep format needs to be changed for Gym
-  def observe_first(self):
-    self._replay_buffer.add_first(self._environment.card)
 
-  def observe(self, action: int, reward, obs, discount):
-    self._replay_buffer.add(action, reward, obs, discount)
+  def observe_first(self, observation):
+    self._replay_buffer.add_first(observation)
 
+  def observe(self, action: int, reward, next_obs, discount):
+    self._replay_buffer.add(action, reward, next_obs, discount)
