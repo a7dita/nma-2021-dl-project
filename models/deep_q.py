@@ -46,8 +46,9 @@ class Agent():
 
   def select_action(self, observation):
     # Compute Q-values.
-    q_values = self._q_network(torch.tensor(observation).unsqueeze(0))  # Adds batch dimension.
-    q_values = q_values.squeeze(0)   # Removes batch dimension
+    # q_values = self._q_network(torch.tensor(observation).unsqueeze(0))  # Adds batch dimension.
+    # q_values = q_values.squeeze(0)   # Removes batch dimension
+    q_values = self._q_network(torch.tensor(observation))
 
     # Select epsilon-greedy action.
     if self._epsilon < torch.rand(1):
@@ -57,8 +58,9 @@ class Agent():
     return action
 
   def q_values(self, observation):
-    q_values = self._q_network(torch.tensor(observation).unsqueeze(0))
-    return q_values.squeeze(0).detach()
+    # q_values = self._q_network(torch.tensor(observation).unsqueeze(0))
+    # return q_values.squeeze(0).detach()
+    q_values = self._q_network(torch.tensor(observation)).detach()
 
   def update(self):
 

@@ -1,6 +1,11 @@
 from itertools import permutations
 import numpy as np
 import collections
+from acme.utils import loggers
+from acme.utils import tree_utils
+import time
+import torch
+import random
 
 def card_generator(li_values=[0, 1, 2, 3], length=3):
     """generate cards given a list of values and the length of tuple."""
@@ -79,7 +84,7 @@ class ReplayBuffer(object):
     def is_ready(self, batch_size: int) -> bool:
         return batch_size <= len(self.buffer)
 
-def run_loop(environment,
+def nn_loop(environment,
              agent,
              num_episodes=None,
              num_steps=None,
@@ -121,22 +126,35 @@ def run_loop(environment,
     episode_return = 0
     episode_loss = 0
 
-    observation = environment.reset()
+    environment.reset()
+    observation = environment.card
+    reward = 0
+    discount = 0.9
+
+    next_obs = None
+    done = False
 
     # Make the first observation.
     agent.observe_first(observation)
 
     # Run an episode.
-    # while not timestep.last():
-    #
-    # Generate an action from the agent's policy and step the environment.
-    action = agent.select_action(timestep.observation)
-    reward, next_obs, done, _ = environment.step(action)
-    if not done:
+    while not done:
+
+      # if episode_steps == 0:
+      #   timestep = (episode_steps, reward, discount, observation)
+
+      # Generate an action from the agent's policy and step the environment.
+      action = agent.select_action(torch.FloatTensor(observation))
+      reward, next_obs, done, _ = environment.step(action)
+
+      # timestep = (episode_steps+1, reward, discount**episode_steps, observation)
+
+      if done:
+          break
 
       # Have the agent observe the timestep and let the agent update itself.
       # TODO how to implement discount???
-      agent.observe(action, reward, next_obs, discount)
+      agent.observe(action, reward, next_obs, discount**episode_steps)
       agent.update()
 
       # Book-keeping.

@@ -161,9 +161,9 @@ def main(
         agent = create_agent(agent, env, policy)
         vanilla_q_loop(env, agent, steps)
     elif agent == "deep_q":
-        q_network = nn.Sequential(nn.Linear(4, 50),
+        q_network = nn.Sequential(nn.Linear(1, 10),
                                 nn.ReLU(),
-                                nn.Linear(50, 50),
+                                nn.Linear(10, 50),
                                 nn.ReLU(),
                                 nn.Linear(50, env.action_space.n))
 
@@ -171,9 +171,8 @@ def main(
         agent = deep_q.Agent(
             env,
             q_network,
-            epsilon=epsilon,
             replay_capacity=100_000,
-            batch_size=10,
+            batch_size=1,
             learning_rate=1e-3)
 
         returns = nn_loop(
@@ -183,18 +182,20 @@ def main(
             logger_time_delta=1.,
             log_loss=True)
 
-        # @title Evaluating the agent (set $\epsilon=0$)
-        # Temporarily change epsilon to be more greedy; remember to change it back.
-        agent._epsilon = 0.0
+        print(returns)
 
-        # Record a few episodes.
-        frames = evaluate(environment, agent, evaluation_episodes=5)
+        # # @title Evaluating the agent (set $\epsilon=0$)
+        # # Temporarily change epsilon to be more greedy; remember to change it back.
+        # agent._epsilon = 0.0
 
-        # Change epsilon back.
-        agent._epsilon = epsilon
+        # # Record a few episodes.
+        # frames = evaluate(environment, agent, evaluation_episodes=5)
 
-        # Display the video of the episodes.
-        display_video(frames, frame_rate=6)
+        # # Change epsilon back.
+        # agent._epsilon = epsilon
+
+        # # Display the video of the episodes.
+        # display_video(frames, frame_rate=6)
 
     # if output == "csv":
     #     metadata = f"{cli_args['agent'][:4]}_{policy[:4]}_{steps}st_e{agent._epsilon}_step{agent._step_size}_mem{agent._streak_memory}"
