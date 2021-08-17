@@ -64,6 +64,13 @@ def cli_args():
         help="Output format of generated data. Default: None",
     )
 
+    parser.add_argument(
+        "-g",
+        "--graphical_render",
+        default=False,
+        help="Graphical rendering. Default: False",
+    )
+
     # returns dictionary of command line arguments
     # all of this is just for convenience
     return vars(parser.parse_args())
@@ -85,7 +92,9 @@ def create_agent(string, env, policy):
     return eval(string).Agent(env, policy)
 
 
-def main(agent="vanilla_q", policy=None, steps=250, output=None):
+def main(
+    agent="vanilla_q", policy=None, steps=250, output=None, graphical_render=False
+):
     # create and init environment
     env = wcst.WCST()
     env.reset()
@@ -137,7 +146,7 @@ def main(agent="vanilla_q", policy=None, steps=250, output=None):
         # render state of agent and environment
         # add print statements freely :)
         if i % 100 == 0:
-            env.render(a, rr[-1])
+            env.render(a, rr[-1], graphical_render=graphical_render)
             # agent.render()
             # print(f"agent rule: {ar}")
             # print(f"env rule: {er}")
@@ -165,5 +174,6 @@ if __name__ == "__main__":
     policy = cli_args["policy"]
     steps = int(cli_args["steps"])
     output = cli_args["output"]
+    graphical_render = bool(cli_args["graphical_render"])
 
-    main(agent, policy, steps, output)
+    main(agent, policy, steps, output, graphical_render)
