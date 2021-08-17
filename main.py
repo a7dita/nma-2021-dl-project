@@ -68,6 +68,7 @@ def cli_args():
     # all of this is just for convenience
     return vars(parser.parse_args())
 
+
 def output_csv(df, metadata):
     """Writes a dataframe to root/gen_data/YY-MM-DD_HHMMSS.csv"""
     timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
@@ -118,7 +119,7 @@ def main(agent="vanilla_q", policy=None, steps=250, output=None):
             rr.pop(0)
             rr.append(-1)
 
-        if output == 'csv':
+        if output == "csv":
             df = df.append(
                 {
                     "state": s,
@@ -136,7 +137,8 @@ def main(agent="vanilla_q", policy=None, steps=250, output=None):
         # render state of agent and environment
         # add print statements freely :)
         if i % 100 == 0:
-            agent.render()
+            env.render(a, rr[-1])
+            # agent.render()
             # print(f"agent rule: {ar}")
             # print(f"env rule: {er}")
             # print(f"current reward: {rr[-1]}")
@@ -146,7 +148,7 @@ def main(agent="vanilla_q", policy=None, steps=250, output=None):
         # update state of agent and environment
         agent.update()
 
-    if output == 'csv':
+    if output == "csv":
         metadata = f"{cli_args['agent'][:4]}_{policy[:4]}_{steps}st_e{agent._epsilon}_step{agent._step_size}_mem{agent._streak_memory}"
         output_csv(df, metadata)
 

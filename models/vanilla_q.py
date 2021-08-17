@@ -5,13 +5,15 @@ from typing import Callable, Sequence
 import helper_functions
 from itertools import product
 
+
 class Agent:
     def __init__(
         self,
         env,
         policy=None,
         discount_factor=0.9,
-        step_size=0.1, epsilon=0.05, #good parameters found by trial
+        step_size=0.1,
+        epsilon=0.05,  # good parameters found by trial
     ):
 
         print(f"agent init w/ step_size {step_size}, epsilon {epsilon}")
@@ -21,9 +23,11 @@ class Agent:
         self._streak_memory = 6
 
         # Get list of possible states (using Cartesian product)
-        q_index = list(product(env.card_deck,
-                               range(self._num_actions),
-                               range(self._streak_memory+1)))
+        q_index = list(
+            product(
+                env.card_deck, range(self._num_actions), range(self._streak_memory + 1)
+            )
+        )
 
         # Create a map of Q-values with possible states as indexes.
         self._q = {}
@@ -46,7 +50,7 @@ class Agent:
         # Initialize observation
         self._obs = env.card
         # Initialize action (which card is picked)
-        self._action = None
+        self._action = 0
         # Map action to rule (which category was picked on previous attempt)
         self._rule = 0
         # Get number of successive correct answers
@@ -95,10 +99,11 @@ class Agent:
     def render(self):
         # self._env.render()
 
-        print(f"Step: {self._env.current_step}")
+        # print(f"Step: {self._env.current_step}")
         # print(f"New obs: {self._obs}")
         # print(f"Prev. action: {self._action}")
         # print(f"Policy: {self._behaviour_policy}")
+        pass
 
     def update(self):
         # Create complete state representation
