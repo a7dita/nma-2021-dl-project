@@ -3,6 +3,7 @@
 import wcst
 import models.deep_q as deep_q
 import models.vanilla_q as vanilla_q
+import models.sarsa as sarsa
 
 # import torch
 # import torch.nn as nn
@@ -16,8 +17,8 @@ from datetime import datetime
 
 ROOT_DIR = Path(__file__).parent
 
-# TODO low prio: move agents to subfolder, get all name strings from there
-LIST_OF_AGENTS = ["vanilla_q", "memory_q", "deep_q"]
+# DONE low prio: move agents to subfolder, get all name strings from there
+LIST_OF_AGENTS = ["vanilla_q", "sarsa", "deep_q"]
 LIST_OF_POLICIES = ["value_max", "epsilon_greedy"]
 
 

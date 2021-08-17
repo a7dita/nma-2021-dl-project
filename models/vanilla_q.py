@@ -1,7 +1,5 @@
-## TODO Create a vanilla Q-learning agent.
-import typing
+## DONE Create a vanilla Q-learning agent.
 import numpy as np
-from typing import Callable, Sequence
 import helper_functions
 from itertools import product
 
@@ -15,8 +13,11 @@ class Agent:
         step_size=0.1,
         epsilon=0.05,  # good parameters found by trial
     ):
+        # Initial rendering
+        print(
+            f"agent init w/ step_size {step_size}, epsilon {epsilon}, and discount {discount_factor}"
+        )
 
-        print(f"agent init w/ step_size {step_size}, epsilon {epsilon}")
         # Get size of state and action space from the environment
         self._num_obs = env.observation_space.n
         self._num_actions = env.action_space.n
