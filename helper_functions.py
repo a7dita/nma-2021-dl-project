@@ -49,20 +49,19 @@ class ReplayBuffer(object):
         self.buffer = collections.deque(maxlen=capacity)
         self._prev_state = None
 
-    # TODO change timestep format to that of gym env
-    # def add_first(self, initial_timestep: dm_env.TimeStep):
-    #     self._prev_state = initial_timestep.observation
+    def add_first(self, obs):
+        self._prev_state = obs
 
-    # def add(self, action: int, timestep: dm_env.TimeStep):
-    #     transition = Transitions(
-    #         state=self._prev_state,
-    #         action=action,
-    #         reward=timestep.reward,
-    #         discount=timestep.discount,
-    #         next_state=timestep.observation,
-    #     )
-    #     self.buffer.append(transition)
-    #     self._prev_state = timestep.observation
+    def add(self, action: int, reward, obs, discount):
+        transition = Transitions(
+            state=self._prev_state,
+            action=action,
+            reward=reward,
+            next_state=obs,
+            discount=discount,
+        )
+        self.buffer.append(transition)
+        self._prev_state = obs
 
     def sample(self, batch_size: int) -> Transitions:
         # Sample a random batch of Transitions as a list.

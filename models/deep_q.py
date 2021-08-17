@@ -25,6 +25,8 @@ class Agent():
     self._batch_size = batch_size
     self._q_network = q_network
 
+    self._environment = environment
+
     # create a second q net with the same structure and initial values, which
     # we'll be updating separately from the learned q-network.
     self._target_network = copy.deepcopy(self._q_network)
@@ -87,12 +89,7 @@ class Agent():
     # Gather the Q-value corresponding to each action in the batch.
     q_s_a = q_s.gather(1, a.view(-1,1)).squeeze(0)
 
-    # TODO Average the squared TD errors over the entire batch using
-    # self._loss_fn, which is defined above as nn.MSELoss()
-    # HINT: Take a look at the reference for nn.MSELoss here:
-    #  https://pytorch.org/docs/stable/generated/torch.nn.MSELoss.html
-    #  What should you put for the input and the target?
-    loss = 0
+    loss = self._loss_fn(target_q_value, q_s_a)
 
     # Compute the gradients of the loss with respect to the q_network variables.
     self._optimizer.zero_grad()
@@ -104,10 +101,11 @@ class Agent():
     # Store the loss for logging purposes (see run_loop implementation above).
     self.last_loss = loss.detach().numpy()
 
+    self._replay
   # TODO timestep format needs to be changed for Gym
-  # def observe_first(self, timestep: dm_env.TimeStep):
-  #   self._replay_buffer.add_first(timestep)
+  def observe_first(self):
+    self._replay_buffer.add_first(self._environment.card)
 
-  # def observe(self, action: int, next_timestep: dm_env.TimeStep):
-  #   self._replay_buffer.add(action, next_timestep)
+  def observe(self, action: int, reward, obs, discount):
+    self._replay_buffer.add(action, reward, obs, discount)
 

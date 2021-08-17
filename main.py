@@ -178,3 +178,37 @@ if __name__ == "__main__":
     graphical_render = bool(cli_args["graphical_render"])
 
     main(agent, policy, steps, output, graphical_render)
+
+# # @title Training the NFQ Agent
+# epsilon = 0.4 # @param {type:"number"}
+
+# max_episode_length = 200
+
+# # Create the environment.
+# grid = build_gridworld_task(
+#     task='simple',
+#     observation_type=ObservationType.AGENT_GOAL_POS,
+#     max_episode_length=max_episode_length)
+# environment, environment_spec = setup_environment(grid)
+
+# # Define the neural function approximator (aka Q network).
+# q_network = nn.Sequential(nn.Linear(4, 50),
+#                           nn.ReLU(),
+#                           nn.Linear(50, 50),
+#                           nn.ReLU(),
+#                           nn.Linear(50, environment_spec.actions.num_values))
+# # Build the trainable Q-learning agent
+# agent = NeuralFittedQAgent(
+#     environment_spec,
+#     q_network,
+#     epsilon=epsilon,
+#     replay_capacity=100_000,
+#     batch_size=10,
+#     learning_rate=1e-3)
+
+# returns = run_loop(
+#     environment=environment,
+#     agent=agent,
+#     num_episodes=500,
+#     logger_time_delta=1.,
+#     log_loss=True)
