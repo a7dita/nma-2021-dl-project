@@ -111,62 +111,68 @@ class WCST(gym.Env):
         """Render environment to screen"""
 
         print("Step: {current_step}".format(current_step=self.current_step))
-        # TODO print more stuff here
 
         if graphical_render:
+            if self.viewer is None:
+                from gym.envs.classic_control import rendering
+                self.viewer = rendering.SimpleImageViewer()
+                self.viewer.width = 960
+                self.viewer.height = 540
+
+                self.viewer.window = pyglet.window.Window(width=self.viewer.width, height=self.viewer.height,
+                                                        display=self.viewer.display, vsync=False, resizable=True)
 
             back = Image.open("stimuli/background.png")
-            im1 = Image.open("stimuli/111.png")
-            im2 = Image.open("stimuli/222.png")
-            im3 = Image.open("stimuli/333.png")
-            im4 = Image.open("stimuli/444.png")
-            im5 = Image.open(
-                f"stimuli/cards/{''.join(str(num + 1) for num in self.card)}.png"
-            )
-            im6 = Image.open("stimuli/frame.png")
-            im7 = Image.open("stimuli/switch.jpg")
-            im8 = Image.open("stimuli/repeat.png")
+            im1 = Image.open("stimuli/cards-not-needed/211.png")
+            im2 = Image.open("stimuli/cards-not-needed/322.png")
+            im3 = Image.open("stimuli/cards/143.png")
+            im4 = Image.open("stimuli/cards-not-needed/434.png")
+            im5 = Image.open(f"stimuli/cards/{''.join(str(num + 1) for num in self._obs)}.png")
+            print((str(num + 1) for num in self._obs))
             back_im = back.copy()
 
-            back_im.paste(im1, (100, 50))
-            back_im.paste(im2, (300, 50))
-            back_im.paste(im3, (500, 50))
-            back_im.paste(im4, (700, 50))
-            back_im.paste(im5, (400, 300))
-            im_rgb = cv2.cvtColor(np.array(back_im), cv2.COLOR_BGR2RGB)
-            cv2.imshow("image", np.array(im_rgb))  # show it!
-            cv2.waitKey(500)
-            # DONE change value of freezing
+            if frame_num == 1:
+                back_im.paste(im1, (100, 50))
+                back_im.paste(im2, (300, 50))
+                back_im.paste(im3, (500, 50))
+                back_im.paste(im4, (700, 50))
+                back_im.paste(im5, (400, 300))
+                # im_rgb = cv2.cvtColor(np.array(back_im), cv2.COLOR_BGR2RGB)
+                self.viewer.imshow(np.array(back_im))
+                time.sleep(2)
+                return self.viewer.isopen
+            else:
+                im6 = Image.open("stimuli/frame.png")
+                im7 = Image.open("stimuli/switch.jpg")
+                im8 = Image.open("stimuli/repeat.png")
 
             # DONE return action & reward to this func
             pile = action + 1
             # DONE replace pile with correct pile number(1/2/3/4) and remove initialization.
             if pile == 1:
                 back_im.paste(im6, (90, 40))
-                back_im.paste(im1, (100, 50))
             elif pile == 2:
                 back_im.paste(im6, (290, 40))
-                back_im.paste(im2, (300, 50))
             elif pile == 3:
                 back_im.paste(im6, (490, 40))
-                back_im.paste(im3, (500, 50))
             else:
                 back_im.paste(im6, (690, 40))
-                back_im.paste(im4, (700, 50))
 
-            im_rgb = cv2.cvtColor(np.array(back_im), cv2.COLOR_BGR2RGB)
-            cv2.imshow("image", np.array(im_rgb))  # show it!
-            cv2.waitKey(500)
+            back_im.paste(im1, (100, 50))
+            back_im.paste(im2, (300, 50))
+            back_im.paste(im3, (500, 50))
+            back_im.paste(im4, (700, 50))
+            back_im.paste(im5, (400, 300))
 
             if reward > 0:
                 back_im.paste(im8, (170, 350))
             else:
                 back_im.paste(im7, (170, 350))
 
-            im_rgb = cv2.cvtColor(np.array(back_im), cv2.COLOR_BGR2RGB)
-            cv2.imshow("image", np.array(im_rgb))  # show it!
-            cv2.waitKey(500)
-            # DONE change value of freezing
+            self.viewer.imshow(np.array(back_im))
+            time.sleep(2)
+
+            return self.viewer.isopen
 
     def close(self):
         super().close()
