@@ -181,7 +181,7 @@ def nn_loop(environment,
 
       # Have the agent observe the timestep and let the agent update itself.
       # TODO how to implement discount???
-      agent.observe(action, reward, next_obs, discount**episode_steps) #this discount will probably cause some weird behavior
+      agent.observe(action, reward, state, discount**episode_steps) #this discount will probably cause some weird behavior
       agent.update()
 
       # Book-keeping.
