@@ -161,7 +161,7 @@ def main(
         agent = create_agent(agent, env, policy)
         vanilla_q_loop(env, agent, steps)
     elif agent == "deep_q":
-        dim_in = 3
+        dim_in = 5
         hidden_size = 50
         q_network = nn.Sequential(nn.Linear(dim_in, hidden_size),
                                 nn.ReLU(),
@@ -174,13 +174,13 @@ def main(
             env,
             q_network,
             replay_capacity=100_000,
-            batch_size=10,
-            learning_rate=1e-3)
+            batch_size=20,
+            learning_rate=5e-3)
 
         returns = nn_loop(
             environment=env,
             agent=agent,
-            num_episodes=500,
+            num_episodes=200,
             logger_time_delta=1.,
             log_loss=True)
 

@@ -128,6 +128,16 @@ def nn_loop(environment,
 
     environment.reset()
     observation = environment.card
+    prev_rule = np.random.randint(4)
+    streak = 0
+    streak_memory = 10
+
+    state = [x for x in observation]
+    state.append(prev_rule)
+    state.append(streak)
+
+    print(f"state: {state}")
+
     reward = 0
     discount = 0.9
 
@@ -135,7 +145,7 @@ def nn_loop(environment,
     done = False
 
     # Make the first observation.
-    agent.observe_first(observation)
+    agent.observe_first(state)
 
     # Run an episode.
     while not done:
@@ -144,8 +154,25 @@ def nn_loop(environment,
       #   timestep = (episode_steps, reward, discount, observation)
 
       # Generate an action from the agent's policy and step the environment.
-      action = agent.select_action(observation)
+      action = agent.select_action(state)
       reward, next_obs, done, _ = environment.step(action)
+
+      if reward == 1:
+          streak = min(streak+1, streak_memory)
+      else:
+          streak = 0
+
+      # update multifactorial state
+      prev_rule = map_action_to_rule(observation, action)
+      observation = next_obs
+
+      # print(f"observation: {observation}")
+
+      state = [x for x in observation]
+      state.append(prev_rule)
+      state.append(streak)
+
+      # print(f"state: {state}")
 
       # timestep = (episode_steps+1, reward, discount**episode_steps, observation)
 
