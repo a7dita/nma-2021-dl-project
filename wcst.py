@@ -28,10 +28,10 @@ class WCST(gym.Env):
         # Card choices (action)
 
         self.choice_cards = [
-            (1, 1, 1),  # 1 blue ball
-            (2, 2, 2),  # 2 yellow crosses
-            (3, 3, 3),  # 3 red triangles
-            (4, 4, 4),  # 4 green stars
+            (1, 1, 1),  # ("red", "triangle" "one")
+            (2, 2, 2),  # ("green", "star", "two")
+            (3, 3, 3),  # ("yellow", "cross", "three")
+            (4, 4, 4),  # ("blue", "circle", "four")
         ]
 
         # initialise cards and rule
