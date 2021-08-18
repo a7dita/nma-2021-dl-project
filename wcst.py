@@ -2,11 +2,11 @@ import random
 import numpy as np
 import gym
 from gym import spaces
-from itertools import permutations
+from gym.envs.classic_control import rendering
+from PIL import Image
+import pyglet
+import time
 from helper_functions import *
-
-from PIL import Image, ImageDraw, ImageFilter
-import cv2
 
 N_DISCRETE_ACTIONS = 4  # pick one of the four discrete cards
 N_DISCRETE_CARDS = 24  # use a deck of 24 unique cards
@@ -45,6 +45,7 @@ class WCST(gym.Env):
         self.current_step = 0
         self.success_counter = 0  # number of correct responses in a row
         self.switch_counter = 0  # keep track of rule switches; max should be 41
+        self.viewer = None
 
     def _next_observation(self):
         """a card is shown with values of (colour, form, num of elements)"""
@@ -107,56 +108,52 @@ class WCST(gym.Env):
         self.success_counter = 0  # reset success success_counter
         self.switch_counter = 0  # reset rule switch counter
 
-    def render(self, action, reward, mode="human", close=False, graphical_render=False):
+    def render(
+        self,
+        action,
+        reward,
+        mode="human",
+        close=False,
+        graphical_render=False,
+    ):
         """Render environment to screen"""
 
         print("Step: {current_step}".format(current_step=self.current_step))
 
         if graphical_render:
+
             if self.viewer is None:
-                from gym.envs.classic_control import rendering
+
                 self.viewer = rendering.SimpleImageViewer()
                 self.viewer.width = 960
                 self.viewer.height = 540
 
-                self.viewer.window = pyglet.window.Window(width=self.viewer.width, height=self.viewer.height,
-                                                        display=self.viewer.display, vsync=False, resizable=True)
+                self.viewer.window = pyglet.window.Window(
+                    width=self.viewer.width,
+                    height=self.viewer.height,
+                    caption="WCST session",
+                    display=self.viewer.display,
+                    vsync=False,
+                    resizable=False,
+                )
+
+            ## Define images
 
             back = Image.open("stimuli/background.png")
-            im1 = Image.open("stimuli/cards-not-needed/211.png")
-            im2 = Image.open("stimuli/cards-not-needed/322.png")
-            im3 = Image.open("stimuli/cards/143.png")
-            im4 = Image.open("stimuli/cards-not-needed/434.png")
-            im5 = Image.open(f"stimuli/cards/{''.join(str(num + 1) for num in self._obs)}.png")
-            print((str(num + 1) for num in self._obs))
+            im1 = Image.open("stimuli/111.png")
+            im2 = Image.open("stimuli/222.png")
+            im3 = Image.open("stimuli/333.png")
+            im4 = Image.open("stimuli/444.png")
+            im5 = Image.open(
+                f"stimuli/cards/{''.join(str(num + 1) for num in self.card)}.png"
+            )
+            im6 = Image.open("stimuli/frame.png")
+            im7 = Image.open("stimuli/switch.jpg")
+            im8 = Image.open("stimuli/repeat.png")
+
             back_im = back.copy()
 
-            if frame_num == 1:
-                back_im.paste(im1, (100, 50))
-                back_im.paste(im2, (300, 50))
-                back_im.paste(im3, (500, 50))
-                back_im.paste(im4, (700, 50))
-                back_im.paste(im5, (400, 300))
-                # im_rgb = cv2.cvtColor(np.array(back_im), cv2.COLOR_BGR2RGB)
-                self.viewer.imshow(np.array(back_im))
-                time.sleep(2)
-                return self.viewer.isopen
-            else:
-                im6 = Image.open("stimuli/frame.png")
-                im7 = Image.open("stimuli/switch.jpg")
-                im8 = Image.open("stimuli/repeat.png")
-
-            # DONE return action & reward to this func
-            pile = action + 1
-            # DONE replace pile with correct pile number(1/2/3/4) and remove initialization.
-            if pile == 1:
-                back_im.paste(im6, (90, 40))
-            elif pile == 2:
-                back_im.paste(im6, (290, 40))
-            elif pile == 3:
-                back_im.paste(im6, (490, 40))
-            else:
-                back_im.paste(im6, (690, 40))
+            ## Call the first frame - 4 cards + 1 stimuli card
 
             back_im.paste(im1, (100, 50))
             back_im.paste(im2, (300, 50))
@@ -164,13 +161,42 @@ class WCST(gym.Env):
             back_im.paste(im4, (700, 50))
             back_im.paste(im5, (400, 300))
 
+            self.viewer.imshow(np.array(back_im))
+
+            ## Wait for a moment
+            time.sleep(0.4)
+
+            ## Call the second frame - a selection frame around the card of choice
+            pile = action + 1
+
+            if pile == 1:
+                back_im.paste(im6, (90, 40))
+                back_im.paste(im1, (100, 50))
+            elif pile == 2:
+                back_im.paste(im6, (290, 40))
+                back_im.paste(im2, (300, 50))
+            elif pile == 3:
+                back_im.paste(im6, (490, 40))
+                back_im.paste(im3, (500, 50))
+            else:
+                back_im.paste(im6, (690, 40))
+                back_im.paste(im4, (700, 50))
+
+            self.viewer.imshow(np.array(back_im))
+
+            ## Wait for a moment again
+            time.sleep(0.3)
+
+            ## Call the third frame - "switch"/"repeat" instruction according to the reward
             if reward > 0:
                 back_im.paste(im8, (170, 350))
             else:
                 back_im.paste(im7, (170, 350))
 
             self.viewer.imshow(np.array(back_im))
-            time.sleep(2)
+
+            ## Freeze there for a moment
+            time.sleep(0.5)
 
             return self.viewer.isopen
 
