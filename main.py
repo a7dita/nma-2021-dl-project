@@ -161,18 +161,20 @@ def main(
         agent = create_agent(agent, env, policy)
         vanilla_q_loop(env, agent, steps)
     elif agent == "deep_q":
-        q_network = nn.Sequential(nn.Linear(1, 10),
+        dim_in = 3
+        hidden_size = 50
+        q_network = nn.Sequential(nn.Linear(dim_in, hidden_size),
                                 nn.ReLU(),
-                                nn.Linear(10, 50),
+                                nn.Linear(hidden_size, hidden_size),
                                 nn.ReLU(),
-                                nn.Linear(50, env.action_space.n))
+                                nn.Linear(hidden_size, env.action_space.n))
 
         # Build the trainable Q-learning agent
         agent = deep_q.Agent(
             env,
             q_network,
             replay_capacity=100_000,
-            batch_size=1,
+            batch_size=10,
             learning_rate=1e-3)
 
         returns = nn_loop(

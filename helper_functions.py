@@ -144,7 +144,7 @@ def nn_loop(environment,
       #   timestep = (episode_steps, reward, discount, observation)
 
       # Generate an action from the agent's policy and step the environment.
-      action = agent.select_action(torch.FloatTensor(observation))
+      action = agent.select_action(observation)
       reward, next_obs, done, _ = environment.step(action)
 
       # timestep = (episode_steps+1, reward, discount**episode_steps, observation)
@@ -154,7 +154,7 @@ def nn_loop(environment,
 
       # Have the agent observe the timestep and let the agent update itself.
       # TODO how to implement discount???
-      agent.observe(action, reward, next_obs, discount**episode_steps)
+      agent.observe(action, reward, next_obs, discount**episode_steps) #this discount will probably cause some weird behavior
       agent.update()
 
       # Book-keeping.
