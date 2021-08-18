@@ -178,11 +178,13 @@ def nn_loop(environment,
     if log_loss:
       result['loss_avg'] = episode_loss/episode_steps
 
-    all_returns.append(episode_return)
+    # all_returns.append(episode_return)
+    all_returns.append(result)
 
     # Log the given results.
     logger.write(result)
 
     if num_steps is not None and num_total_steps >= num_steps:
       break
+
   return all_returns
