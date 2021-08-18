@@ -3,7 +3,9 @@ import collections
 import torch
 import torch.nn as nn
 import copy
-from helper_functions import ReplayBuffer
+from helper_functions import ReplayBuffer, map_action_to_rule
+from tqdm import tqdm
+import time
 
 # Create a convenient container for the SARS tuples required by NFQ.
 Transitions = collections.namedtuple(
@@ -12,7 +14,7 @@ Transitions = collections.namedtuple(
 class Agent():
 
   def __init__(self,
-               environment,
+               env,
                q_network: nn.Module,
                replay_capacity: int = 100_000,
                epsilon: float = 0.1,
@@ -20,12 +22,15 @@ class Agent():
                learning_rate: float = 3e-4):
 
     # Store agent hyperparameters and network.
-    self._num_actions = environment.action_space.n
+    self._num_actions = env.action_space.n
     self._epsilon = epsilon
     self._batch_size = batch_size
     self._q_network = q_network
 
-    self._environment = environment
+    self._streak_memory = 6
+    self._discount = 0.9
+
+    self._env = env
 
     # create a second q net with the same structure and initial values, which
     # we'll be updating separately from the learned q-network.
@@ -44,6 +49,16 @@ class Agent():
     self._optimizer = torch.optim.Adam(self._q_network.parameters(),lr = learning_rate)
     self._loss_fn = nn.MSELoss() # try different loss functions?
 
+    # Initialize observation
+    self._obs = env.card
+    # Initialize action (which card is picked)
+    self._action = 0
+    # Map action to rule (which category was picked on previous attempt)
+    self._rule = 0
+    # Get number of successive correct answers
+    self._streak = 0
+
+
   def select_action(self, observation):
     # Compute Q-values.
     q_values = self._q_network(torch.FloatTensor(observation).unsqueeze(0))  # Adds batch dimension.
@@ -61,6 +76,12 @@ class Agent():
     # q_values = self._q_network(torch.tensor(observation).unsqueeze(0))
     # return q_values.squeeze(0).detach()
     q_values = self._q_network(torch.FloatTensor(observation)).detach()
+
+  def get_state(self):
+    state = [x for x in self._obs]
+    state.append(self._rule)
+    state.append(self._streak)
+    return state
 
   def update(self):
 
@@ -117,3 +138,106 @@ class Agent():
 
   def observe(self, action: int, reward, next_obs, discount):
     self._replay_buffer.add(action, reward, next_obs, discount)
+
+def run(environment,
+             agent,
+             num_episodes=None,
+             num_steps=None,
+             logger_time_delta=1.,
+             label='training_loop',
+             log_loss=False,
+             logbook=None,
+             ):
+  """Perform the run loop.
+
+  We are following the Acme run loop.
+
+  Run the environment loop for `num_episodes` episodes. Each episode is itself
+  a loop which interacts first with the environment to get an observation and
+  then give that observation to the agent in order to retrieve an action. Upon
+  termination of an episode a new episode will be started. If the number of
+  episodes is not given then this will interact with the environment
+  infinitely.
+
+  Args:
+    environment: dm_env used to generate trajectories.
+    agent: acme.Actor for selecting actions in the run loop.
+    num_steps: number of steps to run the loop for. If `None` (default), runs
+      without limit.
+    num_episodes: number of episodes to run the loop for. If `None` (default),
+      runs without limit.
+    logger_time_delta: time interval (in seconds) between consecutive logging
+      steps.
+    label: optional label used at logging steps.
+  """
+  iterator = range(num_episodes) if num_episodes else itertools.count()
+  all_returns = []
+
+  num_total_steps = 0
+  for episode in tqdm(iterator):
+    # Reset any counts and start the environment.
+    start_time = time.time()
+    episode_steps = 0
+    episode_return = 0
+    episode_loss = 0
+
+    environment.reset()
+    agent._obs = environment.card
+
+    state = agent.get_state()
+    done = False
+
+    # Put first state into replay buffer
+    agent.observe_first(state)
+
+    # Run an episode.
+    while not done:
+
+      # Generate an action from the agent's policy and step the environment.
+      action = agent._action = int(agent.select_action(state))
+      reward, next_obs, done, _ = environment.step(action)
+
+      if done:
+          break
+
+      if reward == 1:
+          agent._streak = min(agent._streak+1, agent._streak_memory)
+      else:
+          agent._streak = 0
+
+      agent._rule = map_action_to_rule(agent._obs, action)
+      agent._obs = next_obs
+
+      next_state = agent.get_state()
+
+      # Have the agent observe the timestep and let the agent update itself.
+      # TODO how to implement discount???
+      discount = agent._discount
+      agent.observe(action, reward, next_state, discount**episode_steps) #this discount will probably cause some weird behavior
+      agent.update()
+
+      state = next_state
+
+      # Book-keeping.
+      episode_steps += 1
+      num_total_steps += 1
+      episode_return += reward
+
+      if log_loss:
+        episode_loss += agent.last_loss
+
+      if logbook:
+        logbook.write_actions(episode, episode_return)
+
+      if num_steps is not None and num_total_steps >= num_steps:
+        break
+
+    if logbook:
+      logbook.write_episodes(episode, episode_steps, episode_return)
+
+    all_returns.append(episode_return)
+
+    if num_steps is not None and num_total_steps >= num_steps:
+      break
+
+  return all_returns
