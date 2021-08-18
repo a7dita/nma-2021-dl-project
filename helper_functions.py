@@ -154,7 +154,7 @@ def nn_loop(environment,
       #   timestep = (episode_steps, reward, discount, observation)
 
       # Generate an action from the agent's policy and step the environment.
-      action = agent.select_action(state)
+      action = int(agent.select_action(state))
       reward, next_obs, done, _ = environment.step(action)
 
       if reward == 1:
