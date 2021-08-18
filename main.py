@@ -170,21 +170,28 @@ def main(
                                 nn.Linear(hidden_size, env.action_space.n))
 
         # Build the trainable Q-learning agent
+        batch_size=20
+        learning_rate=5e-3
+
         agent = deep_q.Agent(
             env,
             q_network,
             replay_capacity=100_000,
-            batch_size=20,
-            learning_rate=5e-3)
+            batch_size=batch_size,
+            learning_rate=learning_rate)
 
+        num_episodes=1000
         returns = nn_loop(
             environment=env,
             agent=agent,
-            num_episodes=200,
+            num_episodes=num_episodes,
             logger_time_delta=1.,
             log_loss=True)
 
-        print(returns)
+        df = pd.DataFrame(returns)
+        df.set_index('episode', inplace=True)
+        metadata = f"{cli_args['agent']}_ep_{num_episodes}_bs_{batch_size}_lr_{learning_rate}"
+        output_csv(df, metadata)
 
         # # @title Evaluating the agent (set $\epsilon=0$)
         # # Temporarily change epsilon to be more greedy; remember to change it back.

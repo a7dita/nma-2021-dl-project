@@ -6,6 +6,7 @@ from acme.utils import tree_utils
 import time
 import torch
 import random
+from tqdm import tqdm
 
 def card_generator(li_values=[0, 1, 2, 3], length=3):
     """generate cards given a list of values and the length of tuple."""
@@ -119,7 +120,7 @@ def nn_loop(environment,
   all_returns = []
 
   num_total_steps = 0
-  for episode in iterator:
+  for episode in tqdm(iterator):
     # Reset any counts and start the environment.
     start_time = time.time()
     episode_steps = 0
@@ -136,7 +137,7 @@ def nn_loop(environment,
     state.append(prev_rule)
     state.append(streak)
 
-    print(f"state: {state}")
+    # print(f"state: {state}")
 
     reward = 0
     discount = 0.9
