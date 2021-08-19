@@ -108,14 +108,15 @@ def main(agent="vanilla_q", **kwargs):
         print(f"Return per episode: {returns}")
 
     elif agent == "deep_q":
-        if not "q_network" in kwargs.keys():
-            q_network = DEFAULT_NETWORK
-
         # dynamically obtain accepted keywords from agent
         agent_keys = inspect.signature(deep_q.Agent).parameters.keys()
         agent_args = {key: kwargs[key] for key in kwargs.keys() & agent_keys}
 
-        agent = deep_q.Agent(env, q_network=q_network, **agent_args)
+        # set default network if not otherwise specified
+        if "q_network" not in agent_args:
+            agent_args['q_network'] = DEFAULT_NETWORK
+
+        agent = deep_q.Agent(env, **agent_args)
 
         # set some identifiers
         metadata = f"deep_q_ep_{episodes}_bs_{agent._batch_size}_lr_{agent._learning_rate}"
