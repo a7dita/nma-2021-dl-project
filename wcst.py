@@ -108,14 +108,9 @@ class WCST(gym.Env):
         self.success_counter = 0  # reset success success_counter
         self.switch_counter = 0  # reset rule switch counter
 
-    def render(
-        self,
-        action,
-        reward,
-        mode="human",
-        close=False,
-        graphical_render=False,
-    ):
+        return self.card
+
+    def render(self, action, reward, mode="human", close=False, graphical_render=False):
         """Render environment to screen"""
 
         print("Step: {current_step}".format(current_step=self.current_step))

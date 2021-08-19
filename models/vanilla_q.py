@@ -1,27 +1,24 @@
 ## DONE Create a vanilla Q-learning agent.
 import numpy as np
 import helper_functions
-from itertools import product
+from itertools import count, product
+from tqdm import tqdm
 
 
 class Agent:
     def __init__(
         self,
         env,
-        policy=None,
+        policy="epsilon_greedy",
+        memory=6,
         discount_factor=0.9,
         step_size=0.1,
-        epsilon=0.05,  # good parameters found by trial
+        epsilon=0.02,
     ):
-        # Initial rendering
-        print(
-            f"agent init w/ step_size {step_size}, epsilon {epsilon}, and discount {discount_factor}"
-        )
-
         # Get size of state and action space from the environment
         self._num_obs = env.observation_space.n
         self._num_actions = env.action_space.n
-        self._streak_memory = 6
+        self._streak_memory = memory
 
         # Get list of possible states (using Cartesian product)
         q_index = list(
@@ -114,7 +111,7 @@ class Agent:
         a = self.select_action(s)
 
         # Update environment, get next card and reward
-        r, next_obs, _, _ = self._env.step(a)
+        r, next_obs, done, _ = self._env.step(a)
 
         # Update internal streak count
         if r == 1:
@@ -138,3 +135,48 @@ class Agent:
 
         # Update the Q-value table value at (s, a).
         self._q[s][a] += self._step_size * tde
+
+        return r, done
+
+
+def run(env, agent, num_episodes=None, logbook=None):
+
+    iterator = range(num_episodes) if num_episodes else count()
+    all_returns = []
+
+    num_total_episodes = 0
+    for episode in tqdm(iterator):
+        # Reset any counts and start the environment.
+        episode_steps = 0
+        episode_return = 0
+        cum_return = 0
+
+        env.reset()
+        done = False
+
+        # Run an episode.
+        while not done:
+
+            # update state of agent and environment
+            reward, done = agent.update()
+
+            # book-keeping
+            episode_steps += 1
+            cum_return += reward
+
+            if logbook:
+                logbook.write_actions(episode, cum_return)
+
+        episode_return = cum_return
+
+        if logbook:
+            logbook.write_episodes(episode, episode_steps, episode_return)
+
+        all_returns.append(episode_return)
+
+        num_total_episodes += 1
+
+        if num_episodes is not None and num_total_episodes >= num_episodes:
+            break
+
+    return all_returns
