@@ -15,7 +15,9 @@ from matplotlib import pyplot as plt
 import imageio
 import glob
 from PIL import Image
-import exp_analysis
+
+
+# import exp_analysis
 
 
 class Analysis:
@@ -84,7 +86,6 @@ class Analysis:
 
     def plot_iri_distribution_learning(self, data_frame, limit, step, path):
 
-        # print(df)
         d = data_frame["cum_return"].to_numpy(dtype=int)
 
         li = []
@@ -105,6 +106,19 @@ class Analysis:
         # save the image in the folder of that csv to create Gif later after finish all steps.
         plt.savefig(f"{path}/{limit + 1}.png")
 
+    def count_cumulative_rewards(self, data_frame, name):
+        plt.clf()
+
+        d = data_frame["episode_return"].to_numpy(dtype=int)
+
+        scatter_x = list(range(0, len(d)))
+
+        plt.plot(scatter_x, d, '-ok', color='red')
+
+        plt.xlabel("Episodes", fontweight="bold", fontsize=15)
+        plt.ylabel("Rewards", fontweight="bold", fontsize=15)
+        plt.savefig((f"{self.analysis_dir}/scatter_{name}.png"))
+        plt.clf()
     def get_all_analysis(self):
         # first we build the Gifs
 
@@ -116,7 +130,14 @@ class Analysis:
         # loop on all csv in the analysis directory
 
         for file in os.listdir(self.analysis_dir):
-            if file.endswith("ACTIONS.csv"):
+
+            if file.endswith("EPISODES.csv"):
+                data = pd.read_csv(f"{self.analysis_dir}/{file}")
+
+                # add cumulative scatter plot
+                self.count_cumulative_rewards(data, file[:-4])
+
+            elif file.endswith("ACTIONS.csv"):
 
                 # NOTE we can add any model if we need more.
 
@@ -129,6 +150,7 @@ class Analysis:
                 print(f"working on {self.models_names}, file name: {file}")
 
                 data = pd.read_csv(f"{self.analysis_dir}/{file}")
+
                 imgs_list = []
 
                 # create folders with same csv name to gather all images of that csv to create Gif
@@ -190,14 +212,17 @@ class Analysis:
             color="g",
             width=barWidth,
             edgecolor="grey",
-            label="Preservation Error",
+            label="perseveration Error",
         )
 
-        plt.xlabel("Errors", fontweight="bold", fontsize=15)
-        plt.ylabel("Values", fontweight="bold", fontsize=15)
+        plt.xlabel("Models", fontweight="bold", fontsize=15)
+        plt.ylabel("Errors", fontweight="bold", fontsize=15)
         plt.xticks(
             [r + barWidth for r in range(len(self.models_chart_set_loss))],
             self.models_names,
         )
         plt.legend()
         plt.savefig(f"{self.analysis_dir}/bar_chart.png")
+
+obj = Analysis()
+obj.get_all_analysis()
