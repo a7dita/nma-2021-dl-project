@@ -42,13 +42,6 @@ def cli_args():
     )
 
     parser.add_argument(
-        "-s",
-        "--steps",
-        default=0,
-        help="Number of steps to run the agent through the environment. Default: No limit.",
-    )
-
-    parser.add_argument(
         "-e",
         "--episodes",
         default=100,
@@ -90,7 +83,6 @@ def main(agent="vanilla_q", **kwargs):
     env = wcst.WCST()
     env.reset()
 
-    steps = int(kwargs['steps'])
     episodes = int(kwargs['episodes'])
     output = kwargs['output']
 
@@ -110,7 +102,6 @@ def main(agent="vanilla_q", **kwargs):
 
         returns = agent.run(
             num_episodes=episodes,
-            num_training_steps=steps,
             logbook=log
             )
 
@@ -133,7 +124,6 @@ def main(agent="vanilla_q", **kwargs):
 
         returns = agent.run(
             num_episodes=episodes,
-            num_training_steps=steps,
             logger_time_delta=1.,
             logbook=log
         )

@@ -144,7 +144,6 @@ class Agent():
     self._replay_buffer.add(action, reward, next_obs, discount)
 
   def run(self,
-              num_training_steps: int = 0, # step limit off by default
               num_episodes: int = 100,
               logger_time_delta=1.,
               log_loss=False,
@@ -175,7 +174,6 @@ class Agent():
     iterator = range(num_episodes) if num_episodes else itertools.count()
     all_returns = []
 
-    num_total_steps = 0
     for episode in tqdm(iterator):
       # Reset any counts and start the environment.
       start_time = time.time()
@@ -219,7 +217,6 @@ class Agent():
 
         # Book-keeping.
         episode_steps += 1
-        num_total_steps += 1
         cum_return += reward
 
         if log_loss:
@@ -231,15 +228,9 @@ class Agent():
         if done:
             break
 
-        if num_training_steps != 0 and num_total_steps >= num_training_steps:
-          break
-
       if logbook:
         logbook.write_episodes(episode, episode_steps, cum_return)
 
       all_returns.append(cum_return)
-
-      if num_training_steps != 0 and num_total_steps >= num_training_steps:
-        break
 
     return all_returns
