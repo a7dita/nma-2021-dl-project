@@ -41,13 +41,6 @@ def cli_args():
     )
 
     parser.add_argument(
-        "-s",
-        "--steps",
-        default=None,
-        help="Number of steps to run the agent through the environment. Default: No limit.",
-    )
-
-    parser.add_argument(
         "-e",
         "--episodes",
         default=100,
@@ -89,7 +82,6 @@ def main(
     epsilon=0.05,
     memory=6,  # general
     num_episodes=100,
-    num_steps=None,
     step_size=0.1,  # vanilla_q specific
     learning_rate=5e-3,
     batch_size=10,  # deep_q specific
@@ -123,7 +115,6 @@ def main(
             env=env,
             agent=agent,
             num_episodes=num_episodes,
-            num_steps=num_steps,
             logbook=log,
         )
 
@@ -167,9 +158,6 @@ if __name__ == "__main__":
     agent = _cli_args["agent"]
     policy = _cli_args["policy"]
     episodes = int(_cli_args["episodes"])
-    steps = _cli_args["steps"]
-    if steps:
-        steps = int(steps)
     output = _cli_args["output"]
     graphical_render = bool(_cli_args["graphical_render"])
 
@@ -177,7 +165,6 @@ if __name__ == "__main__":
         agent,
         policy,
         num_episodes=episodes,
-        num_steps=steps,
         output=output,
         graphical_render=graphical_render,
     )

@@ -139,15 +139,16 @@ class Agent:
         return r, done
 
 
-def run(env, agent, num_episodes=None, num_steps=None, logbook=None):
+def run(env, agent, num_episodes=None, logbook=None):
 
     iterator = range(num_episodes) if num_episodes else count()
     all_returns = []
 
-    num_total_steps = 0
+    num_total_episodes = 0
     for episode in tqdm(iterator):
         # Reset any counts and start the environment.
         episode_steps = 0
+        episode_return = 0
         cum_return = 0
 
         env.reset()
@@ -161,22 +162,21 @@ def run(env, agent, num_episodes=None, num_steps=None, logbook=None):
 
             # book-keeping
             episode_steps += 1
-            num_total_steps += 1
             cum_return += reward
 
             if logbook:
                 logbook.write_actions(episode, cum_return)
 
-            if num_steps is not None and num_total_steps >= num_steps:
-                episode_return = cum_return
-                break
+        episode_return = cum_return
 
         if logbook:
             logbook.write_episodes(episode, episode_steps, episode_return)
 
         all_returns.append(episode_return)
 
-        if num_steps is not None and num_total_steps >= num_steps:
+        num_total_episodes += 1
+
+        if num_episodes is not None and num_total_episodes >= num_episodes:
             break
 
     return all_returns
