@@ -6,238 +6,249 @@ import copy
 from helper_functions import ReplayBuffer, map_action_to_rule
 from tqdm import tqdm
 import time
+from itertools import count
 
 # Create a convenient container for the SARS tuples required by NFQ.
 Transitions = collections.namedtuple(
-    'Transitions', ['state', 'action', 'reward', 'discount', 'next_state'])
-
-class Agent():
-
-  def __init__(self,
-               env,
-               q_network: nn.Module,
-               replay_capacity: int = 100_000,
-               epsilon: float = 0.1,
-               batch_size: int = 10,
-               learning_rate: float = 3e-4):
-
-    # Store agent hyperparameters and network.
-    self._num_actions = env.action_space.n
-    self._epsilon = epsilon
-    self._batch_size = batch_size
-    self._q_network = q_network
-
-    self._streak_memory = 6
-    self._discount = 0.9
-
-    self._env = env
-
-    # create a second q net with the same structure and initial values, which
-    # we'll be updating separately from the learned q-network.
-    self._target_network = copy.deepcopy(self._q_network)
-
-    # Container for the computed loss (see run_loop implementation above).
-    self.last_loss = 0.0
-
-    # Create the replay buffer.
-    self._replay_buffer = ReplayBuffer(replay_capacity)
-
-    # Keep an internal tracker of steps
-    self._current_step = 0
-
-    # Setup optimizer that will train the network to minimize the loss.
-    self._optimizer = torch.optim.Adam(self._q_network.parameters(),lr = learning_rate)
-    self._loss_fn = nn.MSELoss() # try different loss functions?
-
-    # Initialize observation
-    self._obs = env.card
-    # Initialize action (which card is picked)
-    self._action = 0
-    # Map action to rule (which category was picked on previous attempt)
-    self._rule = 0
-    # Get number of successive correct answers
-    self._streak = 0
+    "Transitions", ["state", "action", "reward", "discount", "next_state"]
+)
 
 
-  def select_action(self, observation):
-    # Compute Q-values.
-    q_values = self._q_network(torch.FloatTensor(observation).unsqueeze(0))  # Adds batch dimension.
-    q_values = q_values.squeeze(0)   # Removes batch dimension
+class Agent:
+    def __init__(
+        self,
+        env,
+        q_network: nn.Module,
+        replay_capacity: int = 100_000,
+        epsilon: float = 0.1,
+        batch_size: int = 10,
+        learning_rate: float = 3e-4,
+    ):
 
-    # Select epsilon-greedy action.
-    if self._epsilon < torch.rand(1):
-      # TODO randomize initialization?
-      action = q_values.argmax(axis=-1)
-    else:
-      action = torch.randint(low=0, high=self._num_actions , size=(1,), dtype=torch.int64)
-    return action
+        # Store agent hyperparameters and network.
+        self._num_actions = env.action_space.n
+        self._epsilon = epsilon
+        self._batch_size = batch_size
+        self._q_network = q_network
 
-  def q_values(self, observation):
-    # q_values = self._q_network(torch.tensor(observation).unsqueeze(0))
-    # return q_values.squeeze(0).detach()
-    q_values = self._q_network(torch.FloatTensor(observation)).detach()
+        self._streak_memory = 6
+        self._discount = 0.9
 
-  def get_state(self):
-    state = [x for x in self._obs]
-    state.append(self._rule)
-    state.append(self._streak)
-    return state
+        self._env = env
 
-  def update(self):
+        # create a second q net with the same structure and initial values, which
+        # we'll be updating separately from the learned q-network.
+        self._target_network = copy.deepcopy(self._q_network)
 
-    if not self._replay_buffer.is_ready(self._batch_size):
-      # If the replay buffer is not ready to sample from, do nothing.
-      return
+        # Container for the computed loss (see run_loop implementation above).
+        self.last_loss = 0.0
 
-    # Sample a minibatch of transitions from experience replay.
-    transitions = self._replay_buffer.sample(self._batch_size)
+        # Create the replay buffer.
+        self._replay_buffer = ReplayBuffer(replay_capacity)
 
-    # Note: each of these tensors will be of shape [batch_size, ...].
-    s = torch.FloatTensor(transitions.state)
-    a = torch.tensor(transitions.action,dtype=torch.int64)
-    r = torch.FloatTensor(transitions.reward)
-    d = torch.FloatTensor(transitions.discount)
-    next_s = torch.FloatTensor(transitions.next_state)
-    # print(f"next_s: {next_s}")
-    # print(f"buffer: {self._replay_buffer.buffer}")
+        # Keep an internal tracker of steps
+        self._current_step = 0
 
-    # Compute the Q-values at next states in the transitions.
-    with torch.no_grad():
-      # NOTE: okay so here's the thing /blob404
-      # - first nn layer should be (state_dimensions, hidden_size)
-      # - for now i put only the card tuple as the state (i.e. 3 dimensions)
-      # - it should work with both single states (3x1) and batches (e.g., 3x10)
-      # - i can't figure out how to make it accept both shapes unless i transpose the batch vector like below
-      # - (maybe there is some other way to do this)
-      # - it's now running complete training cycles, but i have no idea if it's doing the right thing
-      q_next_s = self._q_network(next_s.T)  # Shape [batch_size, num_actions].
-      max_q_next_s = q_next_s.max(axis=-1)[0]
-      # Compute the TD error and then the losses.
-      target_q_value = r + d * max_q_next_s
+        # Setup optimizer that will train the network to minimize the loss.
+        self._optimizer = torch.optim.Adam(
+            self._q_network.parameters(), lr=learning_rate
+        )
+        self._loss_fn = nn.MSELoss()  # try different loss functions?
 
-    # Compute the Q-values at original state.
-    q_s = self._q_network(s.T)
+        # Initialize observation
+        self._obs = env.card
+        # Initialize action (which card is picked)
+        self._action = 0
+        # Map action to rule (which category was picked on previous attempt)
+        self._rule = 0
+        # Get number of successive correct answers
+        self._streak = 0
 
-    # Gather the Q-value corresponding to each action in the batch.
-    q_s_a = q_s.gather(1, a.view(-1,1)).squeeze(1)
+    def select_action(self, observation):
+        # Compute Q-values.
+        q_values = self._q_network(
+            torch.FloatTensor(observation).unsqueeze(0)
+        )  # Adds batch dimension.
+        q_values = q_values.squeeze(0)  # Removes batch dimension
 
-    loss = self._loss_fn(target_q_value, q_s_a)
+        # Select epsilon-greedy action.
+        if self._epsilon < torch.rand(1):
+            # TODO randomize initialization?
+            action = q_values.argmax(axis=-1)
+        else:
+            action = torch.randint(
+                low=0, high=self._num_actions, size=(1,), dtype=torch.int64
+            )
+        return action
 
-    # Compute the gradients of the loss with respect to the q_network variables.
-    self._optimizer.zero_grad()
+    def q_values(self, observation):
+        # q_values = self._q_network(torch.tensor(observation).unsqueeze(0))
+        # return q_values.squeeze(0).detach()
+        q_values = self._q_network(torch.FloatTensor(observation)).detach()
 
-    loss.backward()
-    # Apply the gradient update.
-    self._optimizer.step()
+    def get_state(self):
+        state = [x for x in self._obs]
+        state.append(self._rule)
+        state.append(self._streak)
+        return state
 
-    # Store the loss for logging purposes (see run_loop implementation above).
-    self.last_loss = loss.detach().numpy()
+    def update(self):
 
-  def observe_first(self, observation):
-    self._replay_buffer.add_first(observation)
+        if not self._replay_buffer.is_ready(self._batch_size):
+            # If the replay buffer is not ready to sample from, do nothing.
+            return
 
-  def observe(self, action: int, reward, next_obs, discount):
-    self._replay_buffer.add(action, reward, next_obs, discount)
+        # Sample a minibatch of transitions from experience replay.
+        transitions = self._replay_buffer.sample(self._batch_size)
 
-def run(environment,
-             agent,
-             num_episodes=None,
-             num_steps=None,
-             logger_time_delta=1.,
-             label='training_loop',
-             log_loss=False,
-             logbook=None,
-             ):
-  """Perform the run loop.
+        # Note: each of these tensors will be of shape [batch_size, ...].
+        s = torch.FloatTensor(transitions.state)
+        a = torch.tensor(transitions.action, dtype=torch.int64)
+        r = torch.FloatTensor(transitions.reward)
+        d = torch.FloatTensor(transitions.discount)
+        next_s = torch.FloatTensor(transitions.next_state)
+        # print(f"next_s: {next_s}")
+        # print(f"buffer: {self._replay_buffer.buffer}")
 
-  We are following the Acme run loop.
+        # Compute the Q-values at next states in the transitions.
+        with torch.no_grad():
+            # NOTE: okay so here's the thing /blob404
+            # - first nn layer should be (state_dimensions, hidden_size)
+            # - for now i put only the card tuple as the state (i.e. 3 dimensions)
+            # - it should work with both single states (3x1) and batches (e.g., 3x10)
+            # - i can't figure out how to make it accept both shapes unless i transpose the batch vector like below
+            # - (maybe there is some other way to do this)
+            # - it's now running complete training cycles, but i have no idea if it's doing the right thing
+            q_next_s = self._q_network(next_s.T)  # Shape [batch_size, num_actions].
+            max_q_next_s = q_next_s.max(axis=-1)[0]
+            # Compute the TD error and then the losses.
+            target_q_value = r + d * max_q_next_s
 
-  Run the environment loop for `num_episodes` episodes. Each episode is itself
-  a loop which interacts first with the environment to get an observation and
-  then give that observation to the agent in order to retrieve an action. Upon
-  termination of an episode a new episode will be started. If the number of
-  episodes is not given then this will interact with the environment
-  infinitely.
+        # Compute the Q-values at original state.
+        q_s = self._q_network(s.T)
 
-  Args:
-    environment: dm_env used to generate trajectories.
-    agent: acme.Actor for selecting actions in the run loop.
-    num_steps: number of steps to run the loop for. If `None` (default), runs
-      without limit.
-    num_episodes: number of episodes to run the loop for. If `None` (default),
-      runs without limit.
-    logger_time_delta: time interval (in seconds) between consecutive logging
-      steps.
-    label: optional label used at logging steps.
-  """
-  iterator = range(num_episodes) if num_episodes else itertools.count()
-  all_returns = []
+        # Gather the Q-value corresponding to each action in the batch.
+        q_s_a = q_s.gather(1, a.view(-1, 1)).squeeze(1)
 
-  num_total_steps = 0
-  for episode in tqdm(iterator):
-    # Reset any counts and start the environment.
-    start_time = time.time()
-    episode_steps = 0
-    episode_return = 0
-    episode_loss = 0
+        loss = self._loss_fn(target_q_value, q_s_a)
 
-    environment.reset()
-    agent._obs = environment.card
+        # Compute the gradients of the loss with respect to the q_network variables.
+        self._optimizer.zero_grad()
 
-    state = agent.get_state()
-    done = False
+        loss.backward()
+        # Apply the gradient update.
+        self._optimizer.step()
 
-    # Put first state into replay buffer
-    agent.observe_first(state)
+        # Store the loss for logging purposes (see run_loop implementation above).
+        self.last_loss = loss.detach().numpy()
 
-    # Run an episode.
-    while not done:
+    def observe_first(self, observation):
+        self._replay_buffer.add_first(observation)
 
-      # Generate an action from the agent's policy and step the environment.
-      action = agent._action = int(agent.select_action(state))
-      reward, next_obs, done, _ = environment.step(action)
+    def observe(self, action: int, reward, next_obs, discount):
+        self._replay_buffer.add(action, reward, next_obs, discount)
 
-      if done:
-          break
 
-      if reward == 1:
-          agent._streak = min(agent._streak+1, agent._streak_memory)
-      else:
-          agent._streak = 0
+def run(
+    environment,
+    agent,
+    num_episodes=None,
+    logger_time_delta=1.0,
+    label="training_loop",
+    log_loss=False,
+    logbook=None,
+):
+    """Perform the run loop.
 
-      agent._rule = map_action_to_rule(agent._obs, action)
-      agent._obs = next_obs
+    We are following the Acme run loop.
 
-      next_state = agent.get_state()
+    Run the environment loop for `num_episodes` episodes. Each episode is itself
+    a loop which interacts first with the environment to get an observation and
+    then give that observation to the agent in order to retrieve an action. Upon
+    termination of an episode a new episode will be started. If the number of
+    episodes is not given then this will interact with the environment
+    infinitely.
 
-      # Have the agent observe the timestep and let the agent update itself.
-      # TODO how to implement discount???
-      discount = agent._discount
-      agent.observe(action, reward, next_state, discount**episode_steps) #this discount will probably cause some weird behavior
-      agent.update()
+    Args:
+      environment: dm_env used to generate trajectories.
+      agent: acme.Actor for selecting actions in the run loop.
+      num_episodes: number of episodes to run the loop for. If `None` (default),
+        runs without limit.
+      logger_time_delta: time interval (in seconds) between consecutive logging
+        steps.
+      label: optional label used at logging steps.
+    """
+    iterator = range(num_episodes) if num_episodes else count()
+    all_returns = []
 
-      state = next_state
+    num_total_episodes = 0
+    for episode in tqdm(iterator):
+        # Reset any counts and start the environment.
+        start_time = time.time()
+        episode_steps = 0
+        episode_return = 0
+        episode_loss = 0
+        cum_return = 0
 
-      # Book-keeping.
-      episode_steps += 1
-      num_total_steps += 1
-      episode_return += reward
+        environment.reset()
+        agent._obs = environment.card
 
-      if log_loss:
-        episode_loss += agent.last_loss
+        state = agent.get_state()
+        done = False
 
-      if logbook:
-        logbook.write_actions(episode, episode_return)
+        # Put first state into replay buffer
+        agent.observe_first(state)
 
-      if num_steps is not None and num_total_steps >= num_steps:
-        break
+        # Run an episode.
+        while not done:
 
-    if logbook:
-      logbook.write_episodes(episode, episode_steps, episode_return)
+            # Generate an action from the agent's policy and step the environment.
+            action = agent._action = int(agent.select_action(state))
+            reward, next_obs, done, _ = environment.step(action)
 
-    all_returns.append(episode_return)
+            if reward == 1:
+                agent._streak = min(agent._streak + 1, agent._streak_memory)
+            else:
+                agent._streak = 0
 
-    if num_steps is not None and num_total_steps >= num_steps:
-      break
+            agent._rule = map_action_to_rule(agent._obs, action)
+            agent._obs = next_obs
 
-  return all_returns
+            next_state = agent.get_state()
+
+            # Have the agent observe the timestep and let the agent update itself.
+            # TODO how to implement discount???
+            discount = agent._discount
+            agent.observe(
+                action, reward, next_state, discount ** episode_steps
+            )  # this discount will probably cause some weird behavior
+            agent.update()
+
+            state = next_state
+
+            # Book-keeping.
+            episode_steps += 1
+            cum_return += reward
+
+            if log_loss:
+                episode_loss += agent.last_loss
+
+            if logbook:
+                logbook.write_actions(episode, cum_return)
+
+            if done:
+                break
+
+        episode_return = cum_return
+
+        if logbook:
+            logbook.write_episodes(episode, episode_steps, episode_return)
+
+        all_returns.append(episode_return)
+
+        num_total_episodes += 1
+
+        if num_episodes is not None and num_total_episodes >= num_episodes:
+            break
+
+    return all_returns
