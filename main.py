@@ -83,72 +83,38 @@ def main(agent="vanilla_q", **kwargs):
     env = wcst.WCST()
     env.reset()
 
+    # set some parameters; agent must be hardcoded option
+    agent_name = agent if agent in LIST_OF_AGENTS else None
     episodes = int(kwargs['episodes'])
     output = kwargs['output']
 
-    # specify agent
-    if agent == "vanilla_q":
-        # dynamically obtain accepted keywords from agent
-        agent_keys = inspect.signature(vanilla_q.Agent).parameters.keys()
-        agent_args = {key: kwargs[key] for key in kwargs.keys() & agent_keys}
+    # dynamically obtain accepted keywords from agent
+    agent_keys = inspect.signature(eval(agent_name).Agent).parameters.keys()
+    agent_args = {key: kwargs[key] for key in kwargs.keys() & agent_keys}
 
-        # create agent
-        agent = vanilla_q.Agent(env, **agent_args)
+    # set default network if not otherwise specified
+    if agent_name == "deep_q" and "q_network" not in agent_args:
+        agent_args['q_network'] = DEFAULT_NETWORK
 
-        # set some identifiers
+    # create agent
+    agent = eval(agent_name).Agent(env, **agent_args)
+
+    if agent_name == "vanilla_q":
         metadata = f"vani_q_ep_{episodes}_mem_{agent._streak_memory}_eps_{agent._epsilon}_step_{agent._step_size}"
-        # create uniform logbook
-        log = logbook(agent, metadata)
-
-        returns = agent.run(
-            num_episodes=episodes,
-            logbook=log
-            )
-
-        print(f"Return per episode: {returns}")
-
-    elif agent == "sarsa":
-        # dynamically obtain accepted keywords from agent
-        agent_keys = inspect.signature(sarsa.Agent).parameters.keys()
-        agent_args = {key: kwargs[key] for key in kwargs.keys() & agent_keys}
-
-        # create agent
-        agent = sarsa.Agent(env, **agent_args)
-
-        # set some identifiers
+    elif agent_name == "sarsa":
         metadata = f"sarsa_ep_{episodes}_mem_{agent._streak_memory}_eps_{agent._epsilon}_step_{agent._step_size}"
-        # create uniform logbook
-        log = logbook(agent, metadata)
-
-        returns = agent.run(
-            num_episodes=episodes,
-            logbook=log
-            )
-
-        print(f"Return per episode: {returns}")
-
-    elif agent == "deep_q":
-        # dynamically obtain accepted keywords from agent
-        agent_keys = inspect.signature(deep_q.Agent).parameters.keys()
-        agent_args = {key: kwargs[key] for key in kwargs.keys() & agent_keys}
-
-        # set default network if not otherwise specified
-        if "q_network" not in agent_args:
-            agent_args['q_network'] = DEFAULT_NETWORK
-
-        agent = deep_q.Agent(env, **agent_args)
-
-        # set some identifiers
+    elif agent_name == "deep_q":
         metadata = f"deep_q_ep_{episodes}_bs_{agent._batch_size}_lr_{agent._learning_rate}"
-        # create uniform logbook
-        log = logbook(agent, metadata)
 
-        returns = agent.run(
-            num_episodes=episodes,
-            logbook=log
+    # create uniform logbook
+    log = logbook(agent, metadata)
+
+    returns = agent.run(
+        num_episodes=episodes,
+        logbook=log
         )
 
-        print(f"Return per episode: {returns}")
+    print(f"Return per episode: {returns}")
 
     if output == "csv":
         log.to_csv()
