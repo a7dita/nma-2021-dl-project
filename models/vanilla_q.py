@@ -138,45 +138,39 @@ class Agent:
 
         return r, done
 
+    def run(self,
+            num_episodes: int = 100,
+            logbook=None
+    ):
 
-def run(env, agent, num_episodes=None, logbook=None):
+        iterator = range(num_episodes) if num_episodes else itertools.count()
+        all_returns = []
 
-    iterator = range(num_episodes) if num_episodes else count()
-    all_returns = []
+        for episode in tqdm(iterator):
+            # Reset any counts and start the environment.
+            episode_steps = 0
+            cum_return = 0
 
-    num_total_episodes = 0
-    for episode in tqdm(iterator):
-        # Reset any counts and start the environment.
-        episode_steps = 0
-        episode_return = 0
-        cum_return = 0
+            self._env.reset()
+            state = self.get_state()
+            done = False
 
-        env.reset()
-        done = False
+            # Run an episode.
+            while not done:
 
-        # Run an episode.
-        while not done:
+                # update state of agent and environment
+                reward, done = self.update()
 
-            # update state of agent and environment
-            reward, done = agent.update()
+                # book-keeping
+                episode_steps += 1
+                cum_return += reward
 
-            # book-keeping
-            episode_steps += 1
-            cum_return += reward
+                if logbook:
+                    logbook.write_actions(episode, cum_return)
 
             if logbook:
-                logbook.write_actions(episode, cum_return)
+                logbook.write_episodes(episode, episode_steps, cum_return)
 
-        episode_return = cum_return
+            all_returns.append(cum_return)
 
-        if logbook:
-            logbook.write_episodes(episode, episode_steps, episode_return)
-
-        all_returns.append(episode_return)
-
-        num_total_episodes += 1
-
-        if num_episodes is not None and num_total_episodes >= num_episodes:
-            break
-
-    return all_returns
+        return all_returns
