@@ -3,6 +3,8 @@
 import main
 import optuna
 import joblib
+import torch
+import torch.nn as nn
 
 ######################################################################
 # TODO: implement tuning functions to search for optimal hyperparameters; for brevity make use of functions defined in main.py
@@ -49,23 +51,40 @@ import joblib
 
 def objective(trial):
     # Suggest values for vanilla_q epsilon, step_size
-    agent = trial.suggest_categorical(['vanilla_q', 'sarsa'])
-    policy = 'epsilon_greedy'
-    num_episodes = 500
+    agent = "deep_q"
+    num_episodes = 400
+    batch_size = 10
+    epsilon = 0.1
     output = "csv"
 
-    epsilon = trial.suggest_float("epsilon", 0.0, 0.25, step=0.01)
-    step_size = trial.suggest_float("step_size", 0.0, 1.0, step=0.02)
-    print(f"epsilon: {epsilon}")
-    print(f"step_size: {step_size}")
+    learning_rate = trial.suggest_float("learning_rate", 1e-4, 1e-2, step=5e-4) # 20? steps
+    # batch_size = trial.suggest_int("batch_size", 4, 11, step=2) # 5 steps
+    n_layers = trial.suggest_int("n_layers", 1, 2) # 2 steps
+    layers = []
 
-    return main.main(agent, policy=policy,
+    in_features = 5
+    for i in range(n_layers):
+        out_features = trial.suggest_int('n_units_l{}'.format(i), 32, 128, step=32) # 8 steps
+        layers.append(torch.nn.Linear(in_features, out_features))
+        layers.append(torch.nn.ReLU())
+        in_features = out_features
+
+    layers.append(torch.nn.Linear(in_features, 4))
+    # softmax = trial.suggest_categorical("softmax", [True, False])
+    # if softmax:
+    #     layers.append(torch.nn.LogSoftmax(dim=1))
+
+    q_network = nn.Sequential(*layers).to(torch.device('cuda'))
+
+    return main.main(agent,
+                     q_network=q_network,
                      episodes=num_episodes,
                      epsilon=epsilon,
-                     step_size=step_size,
+                     learning_rate=learning_rate,
+                     batch_size=batch_size,
                      output=output)
 
 study = optuna.create_study(direction='maximize')
-study.optimize(objective, n_trials=1000)
+study.optimize(objective, n_trials=320)
 
-joblib.dump(study, "vq_sarsa_study.pkl")
+joblib.dump(study, "deep_q_study.pkl")
