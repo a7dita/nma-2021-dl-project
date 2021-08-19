@@ -139,7 +139,7 @@ class Agent:
         return r, done
 
     def run(self,
-            num_steps: int = 0, # step limit off by default
+            num_training_steps: int = 0, # step limit off by default
             num_episodes: int = 100,
             logbook=None
     ):
@@ -171,7 +171,7 @@ class Agent:
                 if logbook:
                     logbook.write_actions(episode, cum_return)
 
-                if num_steps != 0 and num_total_steps >= num_steps:
+                if num_training_steps != 0 and num_total_steps >= num_training_steps:
                     break
 
             if logbook:
@@ -179,7 +179,7 @@ class Agent:
 
             all_returns.append(cum_return)
 
-            if num_steps != 0 and num_total_steps >= num_steps:
+            if num_training_steps != 0 and num_total_steps >= num_training_steps:
                 break
 
         return all_returns

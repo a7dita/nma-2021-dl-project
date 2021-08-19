@@ -110,7 +110,7 @@ def main(agent="vanilla_q", **kwargs):
 
         returns = agent.run(
             num_episodes=episodes,
-            num_steps=steps,
+            num_training_steps=steps,
             logbook=log
             )
 
@@ -133,7 +133,7 @@ def main(agent="vanilla_q", **kwargs):
 
         returns = agent.run(
             num_episodes=episodes,
-            num_steps=steps,
+            num_training_steps=steps,
             logger_time_delta=1.,
             logbook=log
         )

@@ -144,7 +144,7 @@ class Agent():
     self._replay_buffer.add(action, reward, next_obs, discount)
 
   def run(self,
-              num_steps: int = 0, # step limit off by default
+              num_training_steps: int = 0, # step limit off by default
               num_episodes: int = 100,
               logger_time_delta=1.,
               log_loss=False,
@@ -164,7 +164,7 @@ class Agent():
     Args:
       environment: dm_env used to generate trajectories.
       agent: acme.Actor for selecting actions in the run loop.
-      num_steps: number of steps to run the loop for. If `None` (default), runs
+      num_training_steps: number of steps to run the loop for. If `None` (default), runs
         without limit.
       num_episodes: number of episodes to run the loop for. If `None` (default),
         runs without limit.
@@ -231,7 +231,7 @@ class Agent():
         if done:
             break
 
-        if num_steps != 0 and num_total_steps >= num_steps:
+        if num_training_steps != 0 and num_total_steps >= num_training_steps:
           break
 
       if logbook:
@@ -239,7 +239,7 @@ class Agent():
 
       all_returns.append(cum_return)
 
-      if num_steps != 0 and num_total_steps >= num_steps:
+      if num_training_steps != 0 and num_total_steps >= num_training_steps:
         break
 
     return all_returns
