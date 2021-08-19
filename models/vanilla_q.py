@@ -1,7 +1,7 @@
 ## DONE Create a vanilla Q-learning agent.
 import numpy as np
 import helper_functions
-from itertools import product
+from itertools import count, product
 from tqdm import tqdm
 
 
@@ -151,7 +151,7 @@ class Agent:
         for episode in tqdm(iterator):
             # Reset any counts and start the environment.
             episode_steps = 0
-            episode_return = 0
+            cum_return = 0
 
             self._env.reset()
             state = self.get_state()
@@ -166,18 +166,18 @@ class Agent:
                 # book-keeping
                 episode_steps += 1
                 num_total_steps += 1
-                episode_return += reward
+                cum_return += reward
 
                 if logbook:
-                    logbook.write_actions(episode, episode_return)
+                    logbook.write_actions(episode, cum_return)
 
                 if num_steps != 0 and num_total_steps >= num_steps:
                     break
 
             if logbook:
-                logbook.write_episodes(episode, episode_steps, episode_return)
+                logbook.write_episodes(episode, episode_steps, cum_return)
 
-            all_returns.append(episode_return)
+            all_returns.append(cum_return)
 
             if num_steps != 0 and num_total_steps >= num_steps:
                 break

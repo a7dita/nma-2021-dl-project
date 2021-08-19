@@ -6,10 +6,12 @@ import copy
 from helper_functions import ReplayBuffer, map_action_to_rule
 from tqdm import tqdm
 import time
+from itertools import count
 
 # Create a convenient container for the SARS tuples required by NFQ.
 Transitions = collections.namedtuple(
-    'Transitions', ['state', 'action', 'reward', 'discount', 'next_state'])
+    "Transitions", ["state", "action", "reward", "discount", "next_state"]
+)
 
 class Agent():
 
@@ -178,7 +180,7 @@ class Agent():
       # Reset any counts and start the environment.
       start_time = time.time()
       episode_steps = 0
-      episode_return = 0
+      cum_return = 0
       episode_loss = 0
 
       self._env.reset()
@@ -196,9 +198,6 @@ class Agent():
         # Generate an action from the agent's policy and step the environment.
         action = self._action = int(self.select_action(state))
         reward, next_obs, done, _ = self._env.step(action)
-
-        if done:
-            break
 
         if reward == 1:
             self._streak = min(self._streak+1, self._streak_memory)
@@ -221,21 +220,24 @@ class Agent():
         # Book-keeping.
         episode_steps += 1
         num_total_steps += 1
-        episode_return += reward
+        cum_return += reward
 
         if log_loss:
           episode_loss += agent.last_loss
 
         if logbook:
-          logbook.write_actions(episode, episode_return)
+          logbook.write_actions(episode, cum_return)
+
+        if done:
+            break
 
         if num_steps != 0 and num_total_steps >= num_steps:
           break
 
       if logbook:
-        logbook.write_episodes(episode, episode_steps, episode_return)
+        logbook.write_episodes(episode, episode_steps, cum_return)
 
-      all_returns.append(episode_return)
+      all_returns.append(cum_return)
 
       if num_steps != 0 and num_total_steps >= num_steps:
         break

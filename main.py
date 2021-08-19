@@ -17,11 +17,10 @@ import inspect
 LIST_OF_AGENTS = ["vanilla_q", "sarsa", "deep_q"]
 LIST_OF_POLICIES = ["value_max", "epsilon_greedy"]
 
-DEFAULT_NETWORK = nn.Sequential(nn.Linear(5, 50),
-                                nn.ReLU(),
-                                nn.Linear(50, 50),
-                                nn.ReLU(),
-                                nn.Linear(50, 4))
+DEFAULT_NETWORK = nn.Sequential(
+    nn.Linear(5, 50), nn.ReLU(), nn.Linear(50, 50), nn.ReLU(), nn.Linear(50, 4)
+)
+
 
 def cli_args():
     """Parse arguments when running from command line.
@@ -104,10 +103,10 @@ def main(agent="vanilla_q", **kwargs):
         # create agent
         agent = vanilla_q.Agent(env, **agent_args)
 
-        # create uniform logbook
-        log = logbook(agent)
         # set some identifiers
-        log._metadata = f"vani_q_ep_{episodes}_mem_{agent._streak_memory}_eps_{agent._epsilon}_step_{agent._step_size}"
+        metadata = f"vani_q_ep_{episodes}_mem_{agent._streak_memory}_eps_{agent._epsilon}_step_{agent._step_size}"
+        # create uniform logbook
+        log = logbook(agent, metadata)
 
         returns = agent.run(
             num_episodes=episodes,
@@ -127,10 +126,10 @@ def main(agent="vanilla_q", **kwargs):
 
         agent = deep_q.Agent(env, q_network=q_network, **agent_args)
 
-        # create uniform logbook
-        log = logbook(agent)
         # set some identifiers
-        log._metadata = f"deep_q_ep_{episodes}_bs_{agent._batch_size}_lr_{agent._learning_rate}"
+        metadata = f"deep_q_ep_{episodes}_bs_{agent._batch_size}_lr_{agent._learning_rate}"
+        # create uniform logbook
+        log = logbook(agent, metadata)
 
         returns = agent.run(
             num_episodes=episodes,
@@ -143,6 +142,7 @@ def main(agent="vanilla_q", **kwargs):
 
     if output == "csv":
         log.to_csv()
+
 
 if __name__ == "__main__":
     # Wrapper to parse cmd line args.

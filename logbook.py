@@ -7,15 +7,16 @@ import pandas as pd
 
 ROOT_DIR = Path(__file__).parent
 
-class logbook():
-    def __init__(self,
-                 agent):
+
+class logbook:
+    def __init__(self, agent, metadata: str):
 
         self._agent = agent
+        self._metadata = metadata
         self._action_log = []
         self._episode_log = []
 
-    def write_actions(self, episode_num, episode_return):
+    def write_actions(self, episode_num, cum_return):
         """Writes action-wise log."""
         self._action_log.append(
             {
@@ -24,9 +25,9 @@ class logbook():
                 "action": self._agent._action,
                 "agent_rule": self._agent._rule,
                 "env_rule": self._agent._env.rule,
-                "episode_return": episode_return,
-                }
-            )
+                "cum_return": cum_return,
+            }
+        )
 
     def write_episodes(self, episode_num, episode_steps, episode_return):
         """Writes episode-wise log."""
@@ -40,16 +41,16 @@ class logbook():
                 "episode": episode_num,
                 "episode_length": episode_steps,
                 "episode_return": episode_return,
-                }
-            )
+            }
+        )
 
     def to_csv(self):
         """Writes a dataframe to root/gen_data/YY-MM-DD_HHMMSS_{metadata}.csv"""
         df_a = pd.DataFrame(self._action_log)
-        df_a.set_index('episode', inplace=True)
+        df_a.set_index("episode", inplace=True)
 
         df_e = pd.DataFrame(self._episode_log)
-        df_e.set_index('episode', inplace=True)
+        df_e.set_index("episode", inplace=True)
 
         timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
         datadir = ROOT_DIR.joinpath("gen_data")
