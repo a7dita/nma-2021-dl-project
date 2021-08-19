@@ -49,14 +49,13 @@ import joblib
 
 def objective(trial):
     # Suggest values for vanilla_q epsilon, step_size
-    agent = 'vanilla_q'
+    agent = trial.suggest_categorical(['vanilla_q', 'sarsa'])
     policy = 'epsilon_greedy'
-    # num_steps = 4000
-    num_episodes = 100
+    num_episodes = 500
     output = "csv"
 
-    epsilon = trial.suggest_float("epsilon", 0.0, 0.25, step=0.05)
-    step_size = trial.suggest_float("step_size", 0.0, 1.0, step=0.05)
+    epsilon = trial.suggest_float("epsilon", 0.0, 0.25, step=0.01)
+    step_size = trial.suggest_float("step_size", 0.0, 1.0, step=0.02)
     print(f"epsilon: {epsilon}")
     print(f"step_size: {step_size}")
 
@@ -67,6 +66,6 @@ def objective(trial):
                      output=output)
 
 study = optuna.create_study(direction='maximize')
-study.optimize(objective, n_trials=200)
+study.optimize(objective, n_trials=1000)
 
 joblib.dump(study, "study.pkl")
