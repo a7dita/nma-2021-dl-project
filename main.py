@@ -107,6 +107,26 @@ def main(agent="vanilla_q", **kwargs):
 
         print(f"Return per episode: {returns}")
 
+    elif agent == "sarsa":
+        # dynamically obtain accepted keywords from agent
+        agent_keys = inspect.signature(sarsa.Agent).parameters.keys()
+        agent_args = {key: kwargs[key] for key in kwargs.keys() & agent_keys}
+
+        # create agent
+        agent = sarsa.Agent(env, **agent_args)
+
+        # set some identifiers
+        metadata = f"vani_q_ep_{episodes}_mem_{agent._streak_memory}_eps_{agent._epsilon}_step_{agent._step_size}"
+        # create uniform logbook
+        log = logbook(agent, metadata)
+
+        returns = agent.run(
+            num_episodes=episodes,
+            logbook=log
+            )
+
+        print(f"Return per episode: {returns}")
+
     elif agent == "deep_q":
         # dynamically obtain accepted keywords from agent
         agent_keys = inspect.signature(deep_q.Agent).parameters.keys()

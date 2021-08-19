@@ -1,29 +1,24 @@
-## DONE Create a on-policy SARSA with memory.
-
+## DONE Create a vanilla Q-learning agent.
 import numpy as np
 import helper_functions
-from itertools import product
+from itertools import count, product
+from tqdm import tqdm
 
 
 class Agent:
     def __init__(
         self,
         env,
-        policy=None,
-        step_size=0.1,
+        policy="epsilon_greedy",
+        memory=6,
         discount_factor=0.9,
-        epsilon=0.05,
+        step_size=0.1,
+        epsilon=0.02,
     ):
-        #
-        #       Initial rendering
-        print(
-            f"agent init w/ step_size {step_size}, epsilon {epsilon}, and discount {discount_factor}"
-        )
-
         # Get size of state and action space from the environment
         self._num_obs = env.observation_space.n
         self._num_actions = env.action_space.n
-        self._streak_memory = 6
+        self._streak_memory = memory
 
         # Get list of possible states (using Cartesian product)
         q_index = list(
@@ -39,10 +34,6 @@ class Agent:
 
         self._num_states = len(q_index)
 
-        #     index=env.card_deck,
-        #     data=np.zeros((self._num_states, self._num_actions)),
-        # )
-
         # Store algorithm hyper-parameters.
         self._step_size = step_size
         self._discount_factor = discount_factor
@@ -54,7 +45,7 @@ class Agent:
         # Store behavior policy.
         self._behaviour_policy = policy
 
-        # Initialize state
+        # Initialize observation
         self._obs = env.card
         # Initialize action (which card is picked)
         self._action = 0
@@ -105,12 +96,14 @@ class Agent:
 
     def render(self):
         # self._env.render()
-        # print(f"New state: {self._state}")
+
+        # print(f"Step: {self._env.current_step}")
+        # print(f"New obs: {self._obs}")
         # print(f"Prev. action: {self._action}")
+        # print(f"Policy: {self._behaviour_policy}")
         pass
 
     def update(self):
-
         # Create complete state representation
         s = self.get_state()
 
@@ -118,7 +111,7 @@ class Agent:
         a = self.select_action(s)
 
         # Update environment, get next card and reward
-        r, next_obs, _, _ = self._env.step(a)
+        r, next_obs, done, _ = self._env.step(a)
 
         # Update internal streak count
         if r == 1:
@@ -142,3 +135,42 @@ class Agent:
 
         # Update the Q-value table value at (s, a).
         self._q[s][a] += self._step_size * tde
+
+        return r, done
+
+    def run(self,
+            num_episodes: int = 100,
+            logbook=None
+    ):
+
+        iterator = range(num_episodes) if num_episodes else itertools.count()
+        all_returns = []
+
+        for episode in tqdm(iterator):
+            # Reset any counts and start the environment.
+            episode_steps = 0
+            cum_return = 0
+
+            self._env.reset()
+            state = self.get_state()
+            done = False
+
+            # Run an episode.
+            while not done:
+
+                # update state of agent and environment
+                reward, done = self.update()
+
+                # book-keeping
+                episode_steps += 1
+                cum_return += reward
+
+                if logbook:
+                    logbook.write_actions(episode, cum_return)
+
+            if logbook:
+                logbook.write_episodes(episode, episode_steps, cum_return)
+
+            all_returns.append(cum_return)
+
+        return all_returns
