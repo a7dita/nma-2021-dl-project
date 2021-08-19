@@ -145,7 +145,6 @@ class Agent():
 
   def run(self,
               num_episodes: int = 100,
-              logger_time_delta=1.,
               log_loss=False,
               logbook=None,
               ):
@@ -167,8 +166,6 @@ class Agent():
         without limit.
       num_episodes: number of episodes to run the loop for. If `None` (default),
         runs without limit.
-      logger_time_delta: time interval (in seconds) between consecutive logging
-        steps.
       label: optional label used at logging steps.
     """
     iterator = range(num_episodes) if num_episodes else itertools.count()
@@ -219,8 +216,8 @@ class Agent():
         episode_steps += 1
         cum_return += reward
 
-        if log_loss:
-          episode_loss += agent.last_loss
+        # if log_loss: # unused for now
+        #   episode_loss += agent.last_loss
 
         if logbook:
           logbook.write_actions(episode, cum_return)

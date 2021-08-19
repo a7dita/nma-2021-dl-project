@@ -125,7 +125,6 @@ def main(agent="vanilla_q", **kwargs):
 
         returns = agent.run(
             num_episodes=episodes,
-            logger_time_delta=1.,
             logbook=log
         )
 
