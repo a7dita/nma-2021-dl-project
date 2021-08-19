@@ -116,7 +116,7 @@ def main(agent="vanilla_q", **kwargs):
         agent = sarsa.Agent(env, **agent_args)
 
         # set some identifiers
-        metadata = f"vani_q_ep_{episodes}_mem_{agent._streak_memory}_eps_{agent._epsilon}_step_{agent._step_size}"
+        metadata = f"sarsa_ep_{episodes}_mem_{agent._streak_memory}_eps_{agent._epsilon}_step_{agent._step_size}"
         # create uniform logbook
         log = logbook(agent, metadata)
 
