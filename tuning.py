@@ -53,14 +53,18 @@ def objective(trial):
     policy = 'epsilon_greedy'
     # num_steps = 4000
     num_episodes = 100
+    output = "csv"
 
     epsilon = trial.suggest_float("epsilon", 0.0, 0.25, step=0.05)
     step_size = trial.suggest_float("step_size", 0.0, 1.0, step=0.05)
+    print(f"epsilon: {epsilon}")
+    print(f"step_size: {step_size}")
 
-    return main.main(agent, policy,
-                     num_episodes=num_episodes,
+    return main.main(agent, policy=policy,
+                     episodes=num_episodes,
                      epsilon=epsilon,
-                     step_size=step_size)
+                     step_size=step_size,
+                     output=output)
 
 study = optuna.create_study(direction='maximize')
 study.optimize(objective, n_trials=200)

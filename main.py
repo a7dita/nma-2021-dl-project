@@ -119,6 +119,7 @@ def main(agent="vanilla_q", **kwargs):
     if output == "csv":
         log.to_csv()
 
+    return np.sum(returns)
 
 if __name__ == "__main__":
     # Wrapper to parse cmd line args.
