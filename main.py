@@ -16,11 +16,10 @@ import argparse
 LIST_OF_AGENTS = ["vanilla_q", "sarsa", "deep_q"]
 LIST_OF_POLICIES = ["value_max", "epsilon_greedy"]
 
-DEFAULT_NETWORK = nn.Sequential(nn.Linear(5, 50),
-                                nn.ReLU(),
-                                nn.Linear(50, 50),
-                                nn.ReLU(),
-                                nn.Linear(50, 4))
+DEFAULT_NETWORK = nn.Sequential(
+    nn.Linear(5, 50), nn.ReLU(), nn.Linear(50, 50), nn.ReLU(), nn.Linear(50, 4)
+)
+
 
 def cli_args():
     """Parse arguments when running from command line.
@@ -85,13 +84,18 @@ def cli_args():
 
 
 def main(
-        agent="vanilla_q", policy="epsilon_greedy",
-        epsilon=0.05, memory=6,                        # general
-        num_episodes=100, num_steps=None,
-        step_size=0.1,                                 # vanilla_q specific
-        learning_rate=5e-3, batch_size=10,             # deep_q specific
-        q_network=DEFAULT_NETWORK,
-        output=None, graphical_render=False
+    agent="vanilla_q",
+    policy="epsilon_greedy",
+    epsilon=0.05,
+    memory=6,  # general
+    num_episodes=100,
+    num_steps=None,
+    step_size=0.1,  # vanilla_q specific
+    learning_rate=5e-3,
+    batch_size=10,  # deep_q specific
+    q_network=DEFAULT_NETWORK,
+    output=None,
+    graphical_render=False,
 ):
     # create and init environment
     env = wcst.WCST()
@@ -106,21 +110,22 @@ def main(
             memory=memory,
             epsilon=epsilon,
             step_size=step_size,
-            )
+        )
 
-        # create uniform logbook
-        log = logbook(agent)
         # set some identifiers
-        log._metadata = f"vani_q_ep_{num_episodes}_mem_{memory}_eps_{epsilon}_step_{step_size}"
+        metadata = (
+            f"vani_q_ep_{num_episodes}_mem_{memory}_eps_{epsilon}_step_{step_size}"
+        )
+        # create uniform logbook
+        log = logbook(agent, metadata)
 
         returns = vanilla_q.run(
             env=env,
             agent=agent,
             num_episodes=num_episodes,
             num_steps=num_steps,
-            logbook=log
-            )
-        print(returns)
+            logbook=log,
+        )
 
     elif agent == "deep_q":
         q_network = DEFAULT_NETWORK
@@ -133,37 +138,46 @@ def main(
             learning_rate=learning_rate,
         )
 
-        # create uniform logbook
-        log = logbook(agent)
         # set some identifiers
-        log._metadata = f"deep_q_ep_{num_episodes}_bs_{batch_size}_lr_{learning_rate}"
+        metadata = f"deep_q_ep_{num_episodes}_bs_{batch_size}_lr_{learning_rate}"
+
+        # create uniform logbook
+        log = logbook(agent, metadata)
 
         returns = deep_q.run(
             environment=env,
             agent=agent,
             num_episodes=num_episodes,
-            logger_time_delta=1.,
-            logbook=log)
-        print(returns)
+            logger_time_delta=1.0,
+            logbook=log,
+        )
+
+    print(returns)
 
     if output == "csv":
         log.to_csv()
+
 
 if __name__ == "__main__":
     # Wrapper to parse cmd line args.
     # If you want you can run main() from elsewhere,
     # and specify your arguments there.
-    cli_args = cli_args()
+    _cli_args = cli_args()
 
-    agent = cli_args["agent"]
-    policy = cli_args["policy"]
-    episodes = int(cli_args["episodes"])
-    steps = cli_args["steps"]
+    agent = _cli_args["agent"]
+    policy = _cli_args["policy"]
+    episodes = int(_cli_args["episodes"])
+    steps = _cli_args["steps"]
     if steps:
         steps = int(steps)
-    output = cli_args["output"]
-    graphical_render = bool(cli_args["graphical_render"])
+    output = _cli_args["output"]
+    graphical_render = bool(_cli_args["graphical_render"])
 
-    main(agent, policy,
-         num_episodes=episodes, num_steps=steps,
-         output=output, graphical_render=graphical_render)
+    main(
+        agent,
+        policy,
+        num_episodes=episodes,
+        num_steps=steps,
+        output=output,
+        graphical_render=graphical_render,
+    )

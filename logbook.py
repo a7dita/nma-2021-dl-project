@@ -9,9 +9,10 @@ ROOT_DIR = Path(__file__).parent
 
 
 class logbook:
-    def __init__(self, agent):
+    def __init__(self, agent, metadata: str):
 
         self._agent = agent
+        self._metadata = metadata
         self._action_log = []
         self._episode_log = []
 
