@@ -16,6 +16,7 @@ class Agent():
   def __init__(self,
                env,
                q_network: nn.Module,
+               policy: str = "epsilon_greedy", #switch not implemented, just set epsilon = 0
                replay_capacity: int = 100_000,
                epsilon: float = 0.1,
                batch_size: int = 10,
@@ -25,6 +26,7 @@ class Agent():
     self._num_actions = env.action_space.n
     self._epsilon = epsilon
     self._batch_size = batch_size
+    self._learning_rate = learning_rate
     self._q_network = q_network
 
     self._streak_memory = 6
@@ -139,105 +141,103 @@ class Agent():
   def observe(self, action: int, reward, next_obs, discount):
     self._replay_buffer.add(action, reward, next_obs, discount)
 
-def run(environment,
-             agent,
-             num_episodes=None,
-             num_steps=None,
-             logger_time_delta=1.,
-             label='training_loop',
-             log_loss=False,
-             logbook=None,
-             ):
-  """Perform the run loop.
+  def run(self,
+              num_steps: int = 0, # step limit off by default
+              num_episodes: int = 100,
+              logger_time_delta=1.,
+              log_loss=False,
+              logbook=None,
+              ):
+    """Perform the run loop.
 
-  We are following the Acme run loop.
+    We are following the Acme run loop.
 
-  Run the environment loop for `num_episodes` episodes. Each episode is itself
-  a loop which interacts first with the environment to get an observation and
-  then give that observation to the agent in order to retrieve an action. Upon
-  termination of an episode a new episode will be started. If the number of
-  episodes is not given then this will interact with the environment
-  infinitely.
+    Run the environment loop for `num_episodes` episodes. Each episode is itself
+    a loop which interacts first with the environment to get an observation and
+    then give that observation to the agent in order to retrieve an action. Upon
+    termination of an episode a new episode will be started. If the number of
+    episodes is not given then this will interact with the environment
+    infinitely.
 
-  Args:
-    environment: dm_env used to generate trajectories.
-    agent: acme.Actor for selecting actions in the run loop.
-    num_steps: number of steps to run the loop for. If `None` (default), runs
-      without limit.
-    num_episodes: number of episodes to run the loop for. If `None` (default),
-      runs without limit.
-    logger_time_delta: time interval (in seconds) between consecutive logging
-      steps.
-    label: optional label used at logging steps.
-  """
-  iterator = range(num_episodes) if num_episodes else itertools.count()
-  all_returns = []
+    Args:
+      environment: dm_env used to generate trajectories.
+      agent: acme.Actor for selecting actions in the run loop.
+      num_steps: number of steps to run the loop for. If `None` (default), runs
+        without limit.
+      num_episodes: number of episodes to run the loop for. If `None` (default),
+        runs without limit.
+      logger_time_delta: time interval (in seconds) between consecutive logging
+        steps.
+      label: optional label used at logging steps.
+    """
+    iterator = range(num_episodes) if num_episodes else itertools.count()
+    all_returns = []
 
-  num_total_steps = 0
-  for episode in tqdm(iterator):
-    # Reset any counts and start the environment.
-    start_time = time.time()
-    episode_steps = 0
-    episode_return = 0
-    episode_loss = 0
+    num_total_steps = 0
+    for episode in tqdm(iterator):
+      # Reset any counts and start the environment.
+      start_time = time.time()
+      episode_steps = 0
+      episode_return = 0
+      episode_loss = 0
 
-    environment.reset()
-    agent._obs = environment.card
+      self._env.reset()
+      self._obs = self._env.card
 
-    state = agent.get_state()
-    done = False
+      state = self.get_state()
+      done = False
 
-    # Put first state into replay buffer
-    agent.observe_first(state)
+      # Put first state into replay buffer
+      self.observe_first(state)
 
-    # Run an episode.
-    while not done:
+      # Run an episode.
+      while not done:
 
-      # Generate an action from the agent's policy and step the environment.
-      action = agent._action = int(agent.select_action(state))
-      reward, next_obs, done, _ = environment.step(action)
+        # Generate an action from the agent's policy and step the environment.
+        action = self._action = int(self.select_action(state))
+        reward, next_obs, done, _ = self._env.step(action)
 
-      if done:
+        if done:
+            break
+
+        if reward == 1:
+            self._streak = min(self._streak+1, self._streak_memory)
+        else:
+            self._streak = 0
+
+        self._rule = map_action_to_rule(self._obs, action)
+        self._obs = next_obs
+
+        next_state = self.get_state()
+
+        # Have the agent observe the timestep and let the agent update itself.
+        # TODO how to implement discount???
+        discount = self._discount
+        self.observe(action, reward, next_state, discount**episode_steps) #this discount will probably cause some weird behavior
+        self.update()
+
+        state = next_state
+
+        # Book-keeping.
+        episode_steps += 1
+        num_total_steps += 1
+        episode_return += reward
+
+        if log_loss:
+          episode_loss += agent.last_loss
+
+        if logbook:
+          logbook.write_actions(episode, episode_return)
+
+        if num_steps != 0 and num_total_steps >= num_steps:
           break
 
-      if reward == 1:
-          agent._streak = min(agent._streak+1, agent._streak_memory)
-      else:
-          agent._streak = 0
-
-      agent._rule = map_action_to_rule(agent._obs, action)
-      agent._obs = next_obs
-
-      next_state = agent.get_state()
-
-      # Have the agent observe the timestep and let the agent update itself.
-      # TODO how to implement discount???
-      discount = agent._discount
-      agent.observe(action, reward, next_state, discount**episode_steps) #this discount will probably cause some weird behavior
-      agent.update()
-
-      state = next_state
-
-      # Book-keeping.
-      episode_steps += 1
-      num_total_steps += 1
-      episode_return += reward
-
-      if log_loss:
-        episode_loss += agent.last_loss
-
       if logbook:
-        logbook.write_actions(episode, episode_return)
+        logbook.write_episodes(episode, episode_steps, episode_return)
 
-      if num_steps is not None and num_total_steps >= num_steps:
+      all_returns.append(episode_return)
+
+      if num_steps != 0 and num_total_steps >= num_steps:
         break
 
-    if logbook:
-      logbook.write_episodes(episode, episode_steps, episode_return)
-
-    all_returns.append(episode_return)
-
-    if num_steps is not None and num_total_steps >= num_steps:
-      break
-
-  return all_returns
+    return all_returns

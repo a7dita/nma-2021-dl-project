@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import argparse
+import inspect
 
 
 # DONE low prio: move agents to subfolder, get all name strings from there
@@ -44,7 +45,7 @@ def cli_args():
     parser.add_argument(
         "-s",
         "--steps",
-        default=None,
+        default=0,
         help="Number of steps to run the agent through the environment. Default: No limit.",
     )
 
@@ -84,67 +85,61 @@ def cli_args():
     return vars(parser.parse_args())
 
 
-def main(
-        agent="vanilla_q", policy="epsilon_greedy",
-        epsilon=0.05, memory=6,                        # general
-        num_episodes=100, num_steps=None,
-        step_size=0.1,                                 # vanilla_q specific
-        learning_rate=5e-3, batch_size=10,             # deep_q specific
-        q_network=DEFAULT_NETWORK,
-        output=None, graphical_render=False
-):
+def main(agent="vanilla_q", **kwargs):
+
     # create and init environment
     env = wcst.WCST()
     env.reset()
 
+    steps = int(kwargs['steps'])
+    episodes = int(kwargs['episodes'])
+    output = kwargs['output']
+
     # specify agent
     if agent == "vanilla_q":
+        # dynamically obtain accepted keywords from agent
+        agent_keys = inspect.signature(vanilla_q.Agent).parameters.keys()
+        agent_args = {key: kwargs[key] for key in kwargs.keys() & agent_keys}
 
-        agent = vanilla_q.Agent(
-            env=env,
-            policy=policy,
-            memory=memory,
-            epsilon=epsilon,
-            step_size=step_size,
-            )
+        # create agent
+        agent = vanilla_q.Agent(env, **agent_args)
 
         # create uniform logbook
         log = logbook(agent)
         # set some identifiers
-        log._metadata = f"vani_q_ep_{num_episodes}_mem_{memory}_eps_{epsilon}_step_{step_size}"
+        log._metadata = f"vani_q_ep_{episodes}_mem_{agent._streak_memory}_eps_{agent._epsilon}_step_{agent._step_size}"
 
-        returns = vanilla_q.run(
-            env=env,
-            agent=agent,
-            num_episodes=num_episodes,
-            num_steps=num_steps,
+        returns = agent.run(
+            num_episodes=episodes,
+            num_steps=steps,
             logbook=log
             )
-        print(returns)
+
+        print(f"Return per episode: {returns}")
 
     elif agent == "deep_q":
-        q_network = DEFAULT_NETWORK
+        if not "q_network" in kwargs.keys():
+            q_network = DEFAULT_NETWORK
 
-        agent = deep_q.Agent(
-            env=env,
-            q_network=q_network,
-            replay_capacity=100_000,
-            batch_size=batch_size,
-            learning_rate=learning_rate,
-        )
+        # dynamically obtain accepted keywords from agent
+        agent_keys = inspect.signature(deep_q.Agent).parameters.keys()
+        agent_args = {key: kwargs[key] for key in kwargs.keys() & agent_keys}
+
+        agent = deep_q.Agent(env, q_network=q_network, **agent_args)
 
         # create uniform logbook
         log = logbook(agent)
         # set some identifiers
-        log._metadata = f"deep_q_ep_{num_episodes}_bs_{batch_size}_lr_{learning_rate}"
+        log._metadata = f"deep_q_ep_{episodes}_bs_{agent._batch_size}_lr_{agent._learning_rate}"
 
-        returns = deep_q.run(
-            environment=env,
-            agent=agent,
-            num_episodes=num_episodes,
+        returns = agent.run(
+            num_episodes=episodes,
+            num_steps=steps,
             logger_time_delta=1.,
-            logbook=log)
-        print(returns)
+            logbook=log
+        )
+
+        print(f"Return per episode: {returns}")
 
     if output == "csv":
         log.to_csv()
@@ -154,16 +149,4 @@ if __name__ == "__main__":
     # If you want you can run main() from elsewhere,
     # and specify your arguments there.
     cli_args = cli_args()
-
-    agent = cli_args["agent"]
-    policy = cli_args["policy"]
-    episodes = int(cli_args["episodes"])
-    steps = cli_args["steps"]
-    if steps:
-        steps = int(steps)
-    output = cli_args["output"]
-    graphical_render = bool(cli_args["graphical_render"])
-
-    main(agent, policy,
-         num_episodes=episodes, num_steps=steps,
-         output=output, graphical_render=graphical_render)
+    main(**cli_args)
