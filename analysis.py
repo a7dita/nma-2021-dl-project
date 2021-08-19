@@ -114,8 +114,10 @@ class Analysis:
         scatter_x = list(range(0, len(d)))
 
         plt.plot(scatter_x, d, '-ok', color='red')
-        plt.savefig((f"{self.analysis_dir}/scatter_{name}.png"))
 
+        plt.xlabel("Episodes", fontweight="bold", fontsize=15)
+        plt.ylabel("Rewards", fontweight="bold", fontsize=15)
+        plt.savefig((f"{self.analysis_dir}/scatter_{name}.png"))
     def get_all_analysis(self):
         # first we build the Gifs
 
@@ -220,3 +222,4 @@ class Analysis:
         )
         plt.legend()
         plt.savefig(f"{self.analysis_dir}/bar_chart.png")
+
